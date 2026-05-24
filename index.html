@@ -55,7 +55,7 @@ body, html {
 }
 #crosshair::after {
     top: 0;
-    left: 7px;
+    left: 11px;
     width: 2px;
     height: 16px;
 }
@@ -331,7 +331,7 @@ input[type="color"]::-webkit-color-swatch {
             <button id="btn-quit" class="mc-btn py-3 px-4 rounded text-base text-red-300">QUIT TO DESKTOP</button>
         </div>
         <div class="absolute bottom-2 flex flex-col items-center text-center text-xs font-bold drop-shadow-md safe-bottom-margin text-stone-500">
-            <span>Version 5.1 • Java Core, Multi-Block Instance & Structure Blocks</span>
+            <span>Version 5.2 • Flat World Engine, Distance-Bound Physics & Structure Blocks</span>
             <span class="mt-1">
                 Copyright Mojang | Created by: 
                 <a href="mailto:bo212490@gmail.com" class="text-sky-400 hover:text-sky-300 underline font-bold transition-colors">bo212490@gmail.com</a>
@@ -375,12 +375,7 @@ input[type="color"]::-webkit-color-swatch {
                 <div>
                     <label class="block text-stone-300 mb-1 font-bold text-xs uppercase">Terrain Generator</label>
                     <select id="edit-terrain-type" class="w-full bg-stone-900 border-2 border-stone-600 p-2 text-yellow-400 focus:outline-none rounded">
-                        <option value="standard">Standard Hills</option>
                         <option value="flat">Superflat World</option>
-                        <option value="islands">Floating Islands</option>
-                        <option value="desert">Desert Plains</option>
-                        <option value="mountains">Extreme Mountains</option>
-                        <option value="caves">Underground Caves</option>
                     </select>
                 </div>
                 <div class="flex items-center justify-between py-1">
@@ -428,12 +423,7 @@ input[type="color"]::-webkit-color-swatch {
                 <div>
                     <label class="block text-stone-300 mb-1 font-bold">Terrain Generator:</label>
                     <select id="terrain-type-select" class="w-full bg-stone-900 border-2 border-stone-600 p-2 text-yellow-400 focus:outline-none rounded">
-                        <option value="standard" selected>Standard Hills</option>
-                        <option value="flat">Superflat World</option>
-                        <option value="islands">Floating Islands</option>
-                        <option value="desert">Desert Plains</option>
-                        <option value="mountains">Extreme Mountains</option>
-                        <option value="caves">Underground Caves</option>
+                        <option value="flat" selected>Superflat World</option>
                     </select>
                 </div>
 
@@ -947,7 +937,7 @@ let currentWorldName = "New World";
 let currentWorldId = "";
 let currentSeed = 12345;
 let selectedRenderDistance = 4;
-let selectedTerrainType = "standard";
+let selectedTerrainType = "flat";
 
 let controlSensitivity = 1.0;
 let isCloudsEnabled = true;
@@ -1001,13 +991,13 @@ const player = {
     rotation: new THREE.Euler(0, 0, 0, 'YXZ'),
     height: 2.0, 
     radius: 0.35,
-    speed: 5.5,
-    sprintMultiplier: 1.6,
-    sneakMultiplier: 0.5,
+    speed: 4.3,
+    sprintMultiplier: 1.3,
+    sneakMultiplier: 0.3,
     isSprinting: false,
     isSneaking: false,
     flySpeed: 12.0,
-    jumpForce: 6.5,
+    jumpForce: 5.0,
     isGrounded: false,
     lastChunkCoords: { cx: 999, cz: 999 }
 };
@@ -1121,7 +1111,7 @@ function getSavedWorldsList() {
                     alwaysDay: data.alwaysDay || false,
                     weatherCycle: data.weatherCycle !== undefined ? data.weatherCycle : true,
                     renderDistance: data.renderDistance !== undefined ? data.renderDistance : 4,
-                    terrainType: data.terrainType || "standard",
+                    terrainType: "flat",
                     weatherType: data.weatherType || "clear",
                     player: data.player
                 });
@@ -1147,7 +1137,7 @@ function packWorldData(data) {
         ad: data.alwaysDay ? 1 : 0,
         wc: data.weatherCycle ? 1 : 0,
         rd: data.renderDistance || 4,
-        tt: data.terrainType || "standard",
+        tt: "flat",
         wt: data.weatherType || "clear",
         p: data.player ? [
             Math.round(data.player.x*10)/10,
@@ -1184,7 +1174,7 @@ function unpackWorldData(str) {
             alwaysDay: raw.ad === 1,
             weatherCycle: raw.wc === 1,
             renderDistance: raw.rd,
-            terrainType: raw.tt,
+            terrainType: "flat",
             weatherType: raw.wt,
             player: raw.p ? {
                 x: raw.p[0],
@@ -1211,7 +1201,7 @@ function loadWorldDatabase(worldId) {
             worldAlwaysDay = data.alwaysDay || false;
             worldWeatherCycle = data.weatherCycle !== undefined ? data.weatherCycle : true;
             selectedRenderDistance = data.renderDistance !== undefined ? data.renderDistance : 4;
-            selectedTerrainType = data.terrainType || "standard";
+            selectedTerrainType = "flat";
             weatherType = data.weatherType || "clear";
             worldChanges = data.changes || {};
             if(data.player) {
@@ -1245,7 +1235,7 @@ function saveWorldDatabase() {
         alwaysDay: worldAlwaysDay,
         weatherCycle: worldWeatherCycle,
         renderDistance: selectedRenderDistance,
-        terrainType: selectedTerrainType,
+        terrainType: "flat",
         weatherType: weatherType,
         player: { 
             x: player.position.x, 
@@ -1336,28 +1326,11 @@ function noise3D(x, y, z) {
 }
 
 function getNoiseHeight(x, z) {
-    if (selectedTerrainType === "flat") return 4;
-    const offset = (currentSeed % 1000) * 0.5;
-    const nx = x * 0.05 + offset, nz = z * 0.05 + offset;
-    let height = Math.sin(nx) * 4 + Math.cos(nz) * 4;
-    if (selectedTerrainType === "islands") {
-        const dist = Math.sqrt(x*x + z*z);
-        return Math.floor(Math.max(0, (height + 10) * Math.max(0, 1 - dist/60)));
-    }
-    if (selectedTerrainType === "desert") return Math.floor(Math.sin(nx*0.8)*2 + 6);
-    if (selectedTerrainType === "mountains") {
-        let m = noise3D(nx*0.5, 0, nz*0.5) * 20;
-        m += noise3D(nx*2, 0, nz*2) * 5;
-        return Math.floor(Math.max(4, m + 15));
-    }
-    height += noise3D(nx, 0, nz) * 5 + 10;
-    return Math.floor(height);
+    return 4;
 }
 
 function getCaveDensity(x, y, z) {
-    if (selectedTerrainType !== "caves") return 1;
-    const n = noise3D(x*0.1, y*0.1, z*0.1);
-    return n;
+    return 1;
 }
 
 class Chunk {
@@ -1381,7 +1354,7 @@ class Chunk {
             const wx = this.worldX + lx;
             for (let lz = 0; lz < CHUNK_SIZE; lz++) {
                 const wz = this.worldZ + lz;
-                const terrainHeight = getNoiseHeight(wx, wz);
+                const terrainHeight = 4;
                 for (let ly = 0; ly < CHUNK_SIZE; ly++) {
                     const wy = this.worldY + ly;
                     if (wy < 0 || wy >= 64) continue;
@@ -1400,28 +1373,12 @@ class Chunk {
                         continue;
                     }
 
-                    if(getCaveDensity(wx, wy, wz) < -0.2 && wy < terrainHeight - 3) {
-                        this.setLocalBlock(lx, ly, lz, BLOCK_TYPES.AIR);
-                        continue;
-                    }
-
                     if (wy === terrainHeight) {
-                        if (selectedTerrainType === "desert") type = BLOCK_TYPES.SAND;
-                        else if (selectedTerrainType === "caves") type = BLOCK_TYPES.STONE;
-                        else type = BLOCK_TYPES.GRASS;
+                        type = BLOCK_TYPES.GRASS;
                     } else if (wy < terrainHeight && wy >= terrainHeight - 3) {
-                        if (selectedTerrainType === "desert") type = BLOCK_TYPES.SAND;
-                        else if (selectedTerrainType === "caves") type = BLOCK_TYPES.STONE;
-                        else type = BLOCK_TYPES.DIRT;
+                        type = BLOCK_TYPES.DIRT;
                     } else if (wy < terrainHeight - 3) {
                         type = BLOCK_TYPES.STONE;
-                        if(Math.random() < 0.02) type = BLOCK_TYPES.IRON_ORE;
-                        else if(Math.random() < 0.005) type = BLOCK_TYPES.GOLD_ORE;
-                    }
-
-                    if (selectedTerrainType !== "flat" && (selectedTerrainType === "standard" || selectedTerrainType === "mountains" || selectedTerrainType === "islands") && type === BLOCK_TYPES.GRASS && wy < 40) {
-                        const localRand = mulberry32(wx * 13 + wz * 29 + currentSeed)();
-                        if (localRand < 0.015) queueTreeGeneration(wx, wy + 1, wz);
                     }
 
                     if (type !== BLOCK_TYPES.AIR) this.setLocalBlock(lx, ly, lz, type);
@@ -1481,24 +1438,8 @@ class Chunk {
 }
 
 const pendingTrees = {};
-function queueTreeGeneration(wx, wy, wz) { pendingTrees[`${wx},${wy},${wz}`] = true; }
-function applyPendingTrees() {
-    for (const key in pendingTrees) {
-        const [wx, wy, wz] = key.split(',').map(Number);
-        for (let h = 0; h < 4; h++) setGlobalBlockAt(wx, wy + h, wz, BLOCK_TYPES.WOOD, false);
-        for (let lx = -2; lx <= 2; lx++) {
-            for (let lz = -2; lz <= 2; lz++) {
-                for (let ly = 2; ly <= 5; ly++) {
-                    if (lx===0 && lz===0 && ly<4) continue;
-                    if (Math.abs(lx)+Math.abs(lz)+Math.abs(ly-3) > 4) continue;
-                    if(getGlobalBlockAt(wx+lx, wy+ly, wz+lz) === BLOCK_TYPES.AIR)
-                        setGlobalBlockAt(wx+lx, wy+ly, wz+lz, BLOCK_TYPES.LEAVES, false);
-                }
-            }
-        }
-    }
-    for (const key in pendingTrees) delete pendingTrees[key];
-}
+function queueTreeGeneration(wx, wy, wz) {}
+function applyPendingTrees() {}
 
 function getGlobalBlockAt(wx, wy, wz) {
     if(wy<0 || wy>=64) return BLOCK_TYPES.AIR;
@@ -1722,7 +1663,7 @@ function getBlockMaterials(type) {
 function initEngine() {
     const canvas = document.getElementById('game-canvas');
     scene = new THREE.Scene();
-    const skyColor = selectedTerrainType==="desert" ? '#ffeebb' : '#a0c0ff';
+    const skyColor = '#a0c0ff';
     scene.background = new THREE.Color(skyColor);
 
     if (isFogEnabled) {
@@ -1914,11 +1855,11 @@ function updatePhysics(deltaTime) {
     const dirX = inputDir.x * Math.cos(yaw) + inputDir.z * Math.sin(yaw);
     const dirZ = -inputDir.x * Math.sin(yaw) + inputDir.z * Math.cos(yaw);
 
-    let currentSpeed = player.speed;
+    let activeMultiplier = 1.0;
     if (player.isSprinting) {
-        currentSpeed *= player.sprintMultiplier;
+        activeMultiplier = player.sprintMultiplier;
     } else if (player.isSneaking) {
-        currentSpeed *= player.sneakMultiplier;
+        activeMultiplier = player.sneakMultiplier;
     }
 
     if (isFlyEnabled) {
@@ -1938,13 +1879,25 @@ function updatePhysics(deltaTime) {
         player.velocity.y -= 19.8 * dt; 
         if (player.velocity.y < -35) player.velocity.y = -35; 
         
-        player.velocity.x = dirX * currentSpeed;
-        player.velocity.z = dirZ * currentSpeed;
-
-        if (keys.space && player.isGrounded) {
-            player.velocity.y = player.jumpForce;
-            player.isGrounded = false;
-            playStepSound();
+        if (player.isGrounded) {
+            player.velocity.x = dirX * player.speed * activeMultiplier;
+            player.velocity.z = dirZ * player.speed * activeMultiplier;
+            
+            if (keys.space) {
+                player.velocity.y = player.jumpForce;
+                player.isGrounded = false;
+                playStepSound();
+                if (player.isSprinting) {
+                    player.velocity.x = dirX * player.speed * player.sprintMultiplier * 1.5;
+                    player.velocity.z = dirZ * player.speed * player.sprintMultiplier * 1.5;
+                } else {
+                    player.velocity.x = dirX * player.speed * 1.1;
+                    player.velocity.z = dirZ * player.speed * 1.1;
+                }
+            }
+        } else {
+            player.velocity.x = THREE.MathUtils.lerp(player.velocity.x, dirX * player.speed * (player.isSprinting ? player.sprintMultiplier : 1.0), 3 * dt);
+            player.velocity.z = THREE.MathUtils.lerp(player.velocity.z, dirZ * player.speed * (player.isSprinting ? player.sprintMultiplier : 1.0), 3 * dt);
         }
 
         const nextPos = player.position.clone().addScaledVector(player.velocity, dt);
@@ -2252,7 +2205,7 @@ function updateCelestialCycle() {
         evName = "Sunrise 🌅";
         let progressDay = gameTicks / 6000;
         let baseSky = new THREE.Color('#ff8833');
-        let targetSky = new THREE.Color(selectedTerrainType==="desert" ? '#ffeebb' : '#a0c0ff');
+        let targetSky = new THREE.Color('#a0c0ff');
         skyColor.lerpColors(baseSky, targetSky, progressDay);
         ambientLight.color.setHex(0xffffff);
         ambientLight.intensity = 0.4 + progressDay * 0.4;
@@ -2262,7 +2215,7 @@ function updateCelestialCycle() {
     } else if (gameTicks >= 6000 && gameTicks < 12000) {
         evName = "Midday ☀️";
         let progressSunset = (gameTicks - 6000) / 6000;
-        let baseSky = new THREE.Color(selectedTerrainType==="desert" ? '#ffeebb' : '#a0c0ff');
+        let baseSky = new THREE.Color('#a0c0ff');
         let targetSky = new THREE.Color('#ff3300');
         skyColor.lerpColors(baseSky, targetSky, progressSunset);
         ambientLight.color.setHex(0xffffff);
@@ -2769,7 +2722,7 @@ window.openWorldSettings = function(worldId) {
             document.getElementById('edit-world-name').value = data.name || "Unnamed";
             document.getElementById('edit-world-seed').value = data.seed || "";
             document.getElementById('edit-render-distance').value = data.renderDistance !== undefined ? data.renderDistance : 4;
-            document.getElementById('edit-terrain-type').value = data.terrainType || "standard";
+            document.getElementById('edit-terrain-type').value = "flat";
             document.getElementById('edit-world-always-day').checked = data.alwaysDay || false;
             document.getElementById('edit-world-weather').checked = data.weatherCycle !== undefined ? data.weatherCycle : true;
             
@@ -2856,7 +2809,7 @@ function initAppFlow() {
                 const data = unpackWorldData(dataStr);
                 data.name = document.getElementById('edit-world-name').value.trim() || "Unnamed";
                 data.renderDistance = parseInt(document.getElementById('edit-render-distance').value);
-                data.terrainType = document.getElementById('edit-terrain-type').value;
+                data.terrainType = "flat";
                 data.alwaysDay = document.getElementById('edit-world-always-day').checked;
                 data.weatherCycle = document.getElementById('edit-world-weather').checked;
                 
@@ -2886,7 +2839,7 @@ function initAppFlow() {
         const s = document.getElementById('world-seed').value.trim();
         currentSeed = s === "" ? Math.floor(Math.random() * 999999) : (parseInt(s) || Math.floor(Math.random() * 999999));
         selectedRenderDistance = parseInt(document.getElementById('render-distance-select').value);
-        selectedTerrainType = document.getElementById('terrain-type-select').value;
+        selectedTerrainType = "flat";
         worldAlwaysDay = document.getElementById('world-always-day').checked;
         worldWeatherCycle = document.getElementById('world-weather-cycle').checked;
         
@@ -2899,7 +2852,7 @@ function initAppFlow() {
         
         await generateWorldDataAsyncJavaLoader();
         
-        player.position.set(0, getNoiseHeight(0, 0) + 5, 0); 
+        player.position.set(0, 5, 0); 
         player.velocity.set(0,0,0);
         
         isGameRunning = true;
