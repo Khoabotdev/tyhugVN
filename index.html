@@ -1,0 +1,3341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Minecraft 3D Ultimate Edition</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@font-face {
+    font-family: 'Minecraft';
+    src: url('https://raw.githubusercontent.com/Tuan227/tyhugVNRoblox/main/Minecraft%20Fonts.ttf') format('truetype');
+}
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    font-family: 'Minecraft', 'Courier New', Courier, monospace;
+    background-color: #000;
+}
+* {
+    font-family: 'Minecraft', 'Courier New', Courier, monospace !important;
+}
+#game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+#crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    z-index: 10;
+    mix-blend-mode: difference;
+}
+#crosshair::before, #crosshair::after {
+    content: '';
+    position: absolute;
+    background: #ffffff;
+}
+#crosshair::before {
+    top: 7px;
+    left: 0;
+    width: 16px;
+    height: 2px;
+}
+#crosshair::after {
+    top: 0;
+    left: 7px;
+    width: 2px;
+    height: 16px;
+}
+.mc-btn {
+    background-color: #707070;
+    border: 3px solid;
+    border-color: #a0a0a0 #404040 #404040 #a0a0a0;
+    color: #ffffff;
+    text-shadow: 2px 2px 0px #202020;
+    image-rendering: pixelated;
+    font-weight: bold;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+.mc-btn:hover {
+    background-color: #808080;
+    border-color: #b0b0b0 #505050 #505050 #b0b0b0;
+    color: #ffffaa;
+    transform: scale(1.02);
+}
+.mc-btn:active {
+    background-color: #505050;
+    border-color: #202020 #a0a0a0 #a0a0a0 #202020;
+    color: #cccccc;
+    transform: translateY(2px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.menu-bg {
+    background: linear-gradient(rgba(10, 10, 15, 0.88), rgba(10, 10, 15, 0.96)), 
+    repeating-conic-gradient(#2d2d2d 0% 25%, #202020 0% 50%) 50% / 32px 32px;
+    image-rendering: pixelated;
+}
+.hotbar-slot {
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+.hotbar-slot:hover {
+    background-color: #4a4a4a;
+}
+.mobile-control {
+    display: none;
+}
+@media (pointer: coarse) {
+    .mobile-control {
+        display: flex;
+    }
+}
+@media (orientation: portrait) {
+    #portrait-warning {
+        display: flex !important;
+    }
+    #app-container {
+        display: none;
+    }
+}
+@keyframes splash-wiggle {
+    0%, 100% { transform: scale(1) rotate(-10deg); }
+    50% { transform: scale(1.1) rotate(-6deg); }
+}
+.splash-text {
+    animation: splash-wiggle 1.2s infinite ease-in-out;
+    transform-origin: center;
+}
+.custom-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 12px;
+    background: #1a1a1a;
+    outline: none;
+    border: 2px solid #555;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+}
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 30px;
+    background: #707070;
+    border: 2px solid #ccc;
+    border-bottom-color: #333;
+    border-right-color: #333;
+    cursor: pointer;
+}
+.tab-btn {
+    padding: 8px 16px;
+    background-color: #404040;
+    color: #aaa;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 4px 4px 0 0;
+    transition: all 0.2s;
+}
+.tab-btn.active {
+    background-color: #707070;
+    color: #fff;
+    border: 2px solid #a0a0a0;
+    border-bottom: none;
+}
+.tab-content {
+    display: none;
+    padding: 16px;
+    background-color: #707070;
+    border: 2px solid #a0a0a0;
+    border-radius: 0 4px 4px 4px;
+}
+.tab-content.active {
+    display: block;
+}
+.texture-upload-box {
+    width: 44px;
+    height: 44px;
+    border: 2px dashed #aaa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-color: #222;
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.texture-upload-box:hover {
+    border-color: #fff;
+    background-color: #333;
+}
+.texture-upload-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: none;
+}
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 4px;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+    border: 2px solid #fff;
+    border-radius: 4px;
+}
+.hud-element {
+    transition: opacity 0.2s, transform 0.2s;
+}
+::-webkit-scrollbar {
+    width: 12px;
+}
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-left: 2px solid #333;
+}
+::-webkit-scrollbar-thumb {
+    background: #555;
+    border: 2px solid #777;
+    border-bottom-color: #222;
+    border-right-color: #222;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+.safe-bottom-margin {
+    margin-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.safe-left-margin {
+    margin-left: max(40px, env(safe-area-inset-left));
+}
+.safe-right-margin {
+    margin-right: max(40px, env(safe-area-inset-right));
+}
+.safe-top-padding {
+    padding-top: max(16px, env(safe-area-inset-top));
+}
+.safe-bottom-padding {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.safe-left-padding {
+    padding-left: max(40px, env(safe-area-inset-left));
+}
+.safe-right-padding {
+    padding-right: max(40px, env(safe-area-inset-right));
+}
+.mc-inv-slot {
+    background-color: #8b8b8b;
+    border: 2px solid;
+    border-color: #373737 #fff #fff #373737;
+    transition: all 0.15s;
+}
+.mc-inv-slot:hover {
+    background-color: #9f9f9f;
+    transform: scale(1.05);
+}
+.modal-fade-in {
+    animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+#item-name-popup {
+    pointer-events: none;
+    text-shadow: 2px 2px 0px #000;
+    transition: opacity 0.3s;
+}
+</style>
+</head>
+<body class="relative text-white overflow-hidden select-none">
+
+<div id="portrait-warning" class="hidden fixed inset-0 z-[100] bg-zinc-950 text-white flex-col items-center justify-center p-6 text-center">
+    <svg class="w-24 h-24 mb-6 animate-bounce text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+    </svg>
+    <h1 class="text-3xl font-bold mb-4 text-red-400">YÊU CẦU XOAY MÀN HÌNH</h1>
+    <p class="text-lg text-gray-400">Vui lòng xoay ngang thiết bị của bạn để hiển thị đầy đủ giao diện trò chơi.</p>
+</div>
+
+<div id="app-container" class="w-full h-full relative">
+
+    <div id="splash-screen" class="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center transition-opacity duration-1000">
+        <div class="relative flex flex-col items-center">
+            <div class="text-5xl md:text-7xl font-extrabold tracking-wider text-stone-200 drop-shadow-[0_6px_0_rgba(0,0,0,1)] relative px-6 py-4 border-4 border-stone-500 bg-stone-800/90 uppercase select-none shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+                <span class="text-zinc-400">M</span>INE<span class="text-zinc-500">C</span>RAFT
+                <div class="absolute -right-8 -bottom-6 bg-yellow-400 text-black px-3 py-1 text-sm font-bold border-4 border-black rotate-[-12deg] rounded splash-text select-none shadow-lg">
+                    ULTIMATE 3D!
+                </div>
+            </div>
+            <p class="mt-12 text-stone-500 text-sm tracking-widest uppercase font-bold" id="splash-loading-text">ĐANG KHỞI TẠO ENGINE...</p>
+            <div class="w-80 bg-zinc-900 h-4 mt-4 rounded-sm overflow-hidden border-2 border-zinc-700 p-0.5">
+                <div id="splash-bar" class="bg-gradient-to-r from-green-600 to-green-400 h-full w-0 transition-all duration-200"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="java-loading-screen" class="hidden fixed inset-0 z-50 menu-bg flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="flex flex-col items-center max-w-md w-full px-6">
+            <div class="text-3xl font-bold text-stone-200 mb-8 uppercase tracking-widest drop-shadow-[0_3px_0_rgba(0,0,0,1)] text-center">TẢI THẾ GIỚI</div>
+            
+            <div class="relative w-48 h-48 mb-6 flex items-center justify-center">
+                <div class="absolute inset-0 border-8 border-stone-800 rounded-full"></div>
+                <svg class="absolute inset-0 w-full h-full rotate-[-90deg]">
+                    <circle id="java-loading-circle" cx="96" cy="96" r="88" fill="none" stroke="#55ff55" stroke-width="8" stroke-dasharray="552.9" stroke-dashoffset="552.9" stroke-linecap="square" class="transition-all duration-75"></circle>
+                </svg>
+                <div id="java-loading-percent" class="text-3xl font-extrabold text-white drop-shadow-[0_2px_0_rgba(0,0,0,1)]">0%</div>
+            </div>
+            
+            <p id="java-loading-phase" class="text-stone-400 text-sm tracking-widest uppercase font-bold text-center animate-pulse">ĐANG SINH ĐỊA HÌNH...</p>
+        </div>
+    </div>
+
+    <div id="main-menu" class="hidden fixed inset-0 z-40 menu-bg flex flex-col items-center justify-center p-4 safe-left-padding safe-right-padding safe-top-padding safe-bottom-padding">
+        <div class="text-center mb-6 relative">
+            <h1 class="text-5xl md:text-7xl font-extrabold text-stone-200 drop-shadow-[0_6px_0_rgba(0,0,0,1)] tracking-widest uppercase mb-1 animate-pulse">
+                MINECRAFT
+            </h1>
+            <p class="text-green-400 font-bold tracking-widest text-base md:text-lg drop-shadow-[0_2px_0_rgba(0,0,0,1)]">ULTIMATE 3D EDITION</p>
+        </div>
+
+        <div class="flex flex-col gap-4 w-72 md:w-96 max-h-[60vh] overflow-y-auto p-1">
+            <button id="btn-open-saved-worlds" class="mc-btn py-3 px-4 rounded text-base">CHƠI TIẾP THẾ GIỚI</button>
+            <button id="btn-open-create-world" class="mc-btn py-3 px-4 rounded text-base">TẠO THẾ GIỚI MỚI</button>
+            <button id="btn-open-settings" class="mc-btn py-3 px-4 rounded text-base">TÙY CHỌN</button>
+            <button id="btn-quit" class="mc-btn py-3 px-4 rounded text-base text-red-300">THOÁT RA DESKTOP</button>
+        </div>
+        <p class="absolute bottom-2 text-stone-500 text-xs font-bold drop-shadow-md safe-bottom-margin">Version 5.0 • Java Core, Multi-Block Instance & Structure Blocks</p>
+    </div>
+
+    <div id="saved-worlds-menu" class="hidden fixed inset-0 z-40 menu-bg flex flex-col items-center justify-center p-4 safe-left-padding safe-right-padding safe-top-padding safe-bottom-padding">
+        <div class="bg-stone-800 border-4 border-stone-500 rounded max-w-2xl w-full text-white shadow-2xl flex flex-col max-h-[90vh]">
+            <h2 class="text-2xl font-bold text-yellow-400 p-4 text-center uppercase border-b-4 border-stone-700 bg-stone-900 m-0">CHỌN THẾ GIỚI</h2>
+            <div id="worlds-menu-list" class="flex-1 overflow-y-auto p-4 space-y-3 bg-stone-700/50">
+            </div>
+            <div class="p-4 bg-stone-900 border-t-4 border-stone-700 flex justify-center gap-4 safe-bottom-padding">
+                <button id="btn-close-worlds-menu" class="mc-btn px-6 py-2.5 rounded text-base">QUAY LẠI MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="world-settings-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-stone-800 border-4 border-stone-500 rounded max-w-lg w-full text-white shadow-2xl flex flex-col max-h-[90vh] modal-fade-in">
+            <h2 class="text-xl font-bold text-yellow-400 p-4 text-center uppercase border-b-4 border-stone-700 bg-stone-900 m-0">CÀI ĐẶT THẾ GIỚI</h2>
+            <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div>
+                    <label class="block text-stone-300 mb-1 font-bold text-xs uppercase">Tên thế giới</label>
+                    <input id="edit-world-name" type="text" class="w-full bg-stone-900 border-2 border-stone-600 p-2 text-white focus:outline-none focus:border-green-400 rounded">
+                </div>
+                <div>
+                    <label class="block text-stone-300 mb-1 font-bold text-xs uppercase">Seed (Chỉ xem)</label>
+                    <input id="edit-world-seed" type="text" disabled class="w-full bg-stone-900/50 border-2 border-stone-700 p-2 text-stone-400 rounded cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-stone-300 mb-1 font-bold text-xs uppercase">Tầm nhìn (Chunks)</label>
+                    <select id="edit-render-distance" class="w-full bg-stone-900 border-2 border-stone-600 p-2 text-yellow-400 focus:outline-none rounded">
+                        <option value="2">2 Chunks (Siêu nhanh)</option>
+                        <option value="3">3 Chunks (Cân bằng)</option>
+                        <option value="4">4 Chunks (Khuyến nghị)</option>
+                        <option value="5">5 Chunks (Mở rộng)</option>
+                        <option value="6">6 Chunks (Extreme)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-stone-300 mb-1 font-bold text-xs uppercase">Trình tạo địa hình</label>
+                    <select id="edit-terrain-type" class="w-full bg-stone-900 border-2 border-stone-600 p-2 text-yellow-400 focus:outline-none rounded">
+                        <option value="standard">Đồi núi tiêu chuẩn</option>
+                        <option value="flat">Thế giới siêu phẳng</option>
+                        <option value="islands">Đảo bay lơ lửng</option>
+                        <option value="desert">Đồng bằng sa mạc</option>
+                        <option value="mountains">Dãy núi hùng vĩ</option>
+                        <option value="caves">Hang động ngầm</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between py-1">
+                    <label class="text-stone-300 font-bold text-xs uppercase">Luôn là ban ngày</label>
+                    <input id="edit-world-always-day" type="checkbox" class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                </div>
+                <div class="flex items-center justify-between py-1">
+                    <label class="text-stone-300 font-bold text-xs uppercase">Chu kỳ thời tiết</label>
+                    <input id="edit-world-weather" type="checkbox" class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                </div>
+            </div>
+            <div class="p-4 bg-stone-900 border-t-4 border-stone-700 flex justify-end gap-3">
+                <button id="btn-close-world-settings" class="mc-btn px-4 py-2 text-xs">HỦY</button>
+                <button id="btn-save-world-settings" class="mc-btn px-4 py-2 text-xs text-green-300">LƯU & ÁP DỤNG</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="create-world-menu" class="hidden fixed inset-0 z-40 menu-bg flex flex-col items-center justify-center p-4 safe-left-padding safe-right-padding safe-top-padding safe-bottom-padding">
+        <div class="bg-stone-800 border-4 border-stone-500 p-6 rounded max-w-xl w-full text-white shadow-2xl overflow-y-auto max-h-[95vh]">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-6 text-center tracking-wide uppercase drop-shadow-md">Tạo thế giới mới</h2>
+
+            <div class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-stone-300 mb-1 font-bold">Tên thế giới:</label>
+                    <input id="world-name" type="text" value="Thế giới mới" class="w-full bg-stone-900 border-2 border-stone-600 p-2 text-white focus:outline-none focus:border-green-400 rounded">
+                </div>
+
+                <div>
+                    <label class="block text-stone-300 mb-1 font-bold">Seed:</label>
+                    <input id="world-seed" type="text" placeholder="Để trống để sinh ngẫu nhiên" class="w-full bg-stone-900 border-2 border-stone-600 p-2 text-green-400 focus:outline-none focus:border-green-400 rounded">
+                </div>
+
+                <div>
+                    <label class="block text-stone-300 mb-1 font-bold">Tầm nhìn Chunks:</label>
+                    <select id="render-distance-select" class="w-full bg-stone-900 border-2 border-stone-600 p-2 text-yellow-400 focus:outline-none rounded">
+                        <option value="2">2 Chunks (Siêu nhanh)</option>
+                        <option value="3">3 Chunks (Cân bằng)</option>
+                        <option value="4" selected>4 Chunks (Khuyến nghị)</option>
+                        <option value="5">5 Chunks (Mở rộng)</option>
+                        <option value="6">6 Chunks (Extreme)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-stone-300 mb-1 font-bold">Trình tạo địa hình:</label>
+                    <select id="terrain-type-select" class="w-full bg-stone-900 border-2 border-stone-600 p-2 text-yellow-400 focus:outline-none rounded">
+                        <option value="standard" selected>Đồi núi tiêu chuẩn</option>
+                        <option value="flat">Thế giới siêu phẳng</option>
+                        <option value="islands">Đảo bay lơ lửng</option>
+                        <option value="desert">Sa mạc cát</option>
+                        <option value="mountains">Extreme núi cao</option>
+                        <option value="caves">Hang động ngầm</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-between py-1">
+                    <label class="text-stone-300 font-bold">Luôn luôn ban ngày:</label>
+                    <input id="world-always-day" type="checkbox" class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                </div>
+
+                <div class="flex items-center justify-between py-1">
+                    <label class="text-stone-300 font-bold">Chu kỳ thời tiết hoạt động:</label>
+                    <input id="world-weather-cycle" type="checkbox" checked class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                </div>
+            </div>
+
+            <div class="mt-6 flex gap-4">
+                <button id="btn-cancel-create" class="mc-btn flex-1 py-2.5 rounded text-base">HỦY</button>
+                <button id="btn-confirm-create" class="mc-btn flex-1 py-2.5 rounded text-base text-green-300">TẠO</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-menu" class="hidden fixed inset-0 z-40 menu-bg flex flex-col items-center justify-center p-4 safe-left-padding safe-right-padding safe-top-padding safe-bottom-padding">
+        <div class="bg-stone-800 border-4 border-stone-500 rounded max-w-2xl w-full text-white shadow-2xl flex flex-col max-h-[90vh]">
+            <h2 class="text-2xl font-bold text-yellow-400 p-4 text-center uppercase border-b-4 border-stone-700 bg-stone-900 m-0">TÙY CHỌN HỆ THỐNG</h2>
+
+            <div class="flex border-b-2 border-stone-600 bg-stone-800 px-4 pt-2 gap-2 overflow-x-auto">
+                <button class="tab-btn active shrink-0" data-tab="tab-graphics">Đồ họa</button>
+                <button class="tab-btn shrink-0" data-tab="tab-gameplay">Lối chơi</button>
+                <button class="tab-btn shrink-0" data-tab="tab-interface">Giao diện</button>
+                <button class="tab-btn shrink-0" data-tab="tab-storage">Trình tải bộ nhớ (JSON)</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-0 bg-stone-700">
+                <div id="tab-graphics" class="tab-content active space-y-4">
+                    <div>
+                        <label class="block text-stone-200 mb-1 font-bold">Độ chân thực Shader:</label>
+                        <select id="shader-mode-select" class="w-full bg-stone-900 border-2 border-stone-500 p-2 text-yellow-400 focus:outline-none">
+                            <option value="lite" selected>Lite (Không bóng - mượt nhất)</option>
+                            <option value="normal">Normal (Chuẩn ánh sáng mềm)</option>
+                            <option value="max">Max Shader (Đầy đủ bóng đổ thực tế)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b border-stone-600">
+                        <span class="text-stone-200 font-bold">Mây trên trời:</span>
+                        <input id="settings-clouds" type="checkbox" checked class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b border-stone-600">
+                        <span class="text-stone-200 font-bold">Sao ban đêm:</span>
+                        <input id="settings-stars" type="checkbox" checked class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b border-stone-600">
+                        <span class="text-stone-200 font-bold">Hiệu ứng thời tiết:</span>
+                        <input id="settings-weather" type="checkbox" checked class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b border-stone-600">
+                        <span class="text-stone-200 font-bold">Sương mù khí quyển:</span>
+                        <input id="settings-fog" type="checkbox" checked class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b border-stone-600">
+                        <span class="text-stone-200 font-bold">Hạt vụn khi đập khối:</span>
+                        <input id="settings-particles" type="checkbox" checked class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                    </div>
+                </div>
+
+                <div id="tab-gameplay" class="tab-content space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-stone-200 font-bold">Độ nhạy chuột điều hướng:</span>
+                            <span id="sensitivity-value" class="text-yellow-400 font-bold">100%</span>
+                        </div>
+                        <input id="sensitivity-range" type="range" min="20" max="250" value="100" class="custom-slider">
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b border-stone-600">
+                        <span class="text-stone-200 font-bold">Trạng thái bay lơ lửng:</span>
+                        <input id="settings-fly" type="checkbox" class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b border-stone-600">
+                        <span class="text-stone-200 font-bold">Âm thanh hiệu ứng:</span>
+                        <input id="settings-sound" type="checkbox" checked class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                    </div>
+                </div>
+
+                <div id="tab-interface" class="tab-content space-y-4">
+                    <div class="flex items-center justify-between py-2 border-b border-stone-600">
+                        <span class="text-stone-200 font-bold">Hiển thị HUD:</span>
+                        <input id="settings-show-hud" type="checkbox" checked class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between py-2 border-b border-stone-600">
+                        <span class="text-stone-200 font-bold">Bảng điều khiển ảo Mobile:</span>
+                        <input id="settings-show-mobile-btns" type="checkbox" checked class="w-5 h-5 accent-yellow-500 cursor-pointer">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-stone-200 font-bold">Tỉ lệ kích thước HUD:</span>
+                            <span id="hud-scale-value" class="text-yellow-400 font-bold">100%</span>
+                        </div>
+                        <input id="hud-scale-range" type="range" min="50" max="150" value="100" step="10" class="custom-slider">
+                    </div>
+                </div>
+
+                <div id="tab-storage" class="tab-content space-y-4">
+                    <div class="bg-stone-800 p-4 border-2 border-stone-600 rounded">
+                        <h3 class="text-yellow-400 font-bold mb-2 text-center uppercase text-sm">BỘ NHỚ TRÌNH DUYỆT (LOADE-JSON)</h3>
+                        <p class="text-xs text-stone-300 mb-4 leading-relaxed">Nhập mã JSON vào ô dưới đây để thay thế toàn bộ dữ liệu hoặc kết xuất cấu trúc sao lưu dữ liệu thế giới hiện tại.</p>
+                        
+                        <textarea id="storage-json-area" class="w-full h-32 bg-stone-900 border-2 border-stone-600 p-2 text-green-400 font-mono text-xs focus:outline-none focus:border-green-400 rounded" placeholder="Nhập chuỗi JSON thế giới tại đây..."></textarea>
+                        
+                        <div class="flex gap-2 mt-4">
+                            <button id="btn-export-memory-json" class="mc-btn flex-1 py-2 text-xs text-blue-300">KẾT XUẤT JSON</button>
+                            <button id="btn-import-memory-json" class="mc-btn flex-1 py-2 text-xs text-yellow-300">NẠP BỘ NHỚ JSON</button>
+                        </div>
+                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-stone-600 text-xs">
+                            <span class="text-stone-300">Kích thước lưu: <span id="storage-usage" class="text-green-400">0 KB</span></span>
+                            <button id="btn-clear-storage" class="mc-btn px-3 py-1 bg-red-800 text-white border-red-600">ĐỊNH DẠNG SẠCH BỘ NHỚ</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-stone-900 border-t-4 border-stone-700 flex justify-center gap-4 safe-bottom-padding">
+                <button id="btn-cancel-settings" class="mc-btn px-6 py-2.5 rounded text-base">HỦY</button>
+                <button id="btn-close-settings" class="mc-btn px-6 py-2.5 rounded text-base text-green-300">LƯU & ĐỒNG BỘ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-shader-dialog" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+        <div class="bg-stone-800 border-4 border-stone-500 p-6 rounded max-w-md w-full text-center shadow-2xl">
+            <h3 class="text-2xl font-bold text-yellow-400 mb-4">KHỞI ĐỘNG LẠI PIPELINE</h3>
+            <p class="text-stone-200 text-base mb-8">Thay đổi chế độ đổ bóng Shader yêu cầu thiết lập lại toàn bộ các mesh chunk hiện hữu để tránh lỗi hiển thị. Bạn đồng ý tiếp tục?</p>
+            <div class="flex gap-4">
+                <button id="btn-cancel-shader" class="mc-btn flex-1 py-3 rounded text-lg">TỪ CHỐI</button>
+                <button id="btn-confirm-shader" class="mc-btn flex-1 py-3 rounded text-lg text-red-400">ĐỒNG Ý</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-block-menu" class="hidden fixed inset-0 z-[70] bg-black/85 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-stone-800 border-4 border-stone-500 p-6 rounded max-w-2xl w-full text-white shadow-2xl overflow-y-auto max-h-[95vh] modal-fade-in">
+            <h2 class="text-xl font-bold text-yellow-400 mb-2 text-center uppercase">Trình xây dựng khối độc lập</h2>
+            <p class="text-stone-400 text-xs text-center mb-4">Chỉnh sửa khối tùy chỉnh hiện tại của bạn. Mỗi khối tạo ra sẽ lưu độc lập và có thể xếp chồng.</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-stone-300 mb-1 text-xs uppercase font-bold">Tên khối tùy chỉnh</label>
+                    <input id="cb-name" type="text" value="Khối tùy chỉnh" class="w-full bg-stone-900 border border-stone-600 p-2 text-white text-sm focus:outline-none focus:border-green-400 rounded">
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-stone-900/50 p-4 rounded border border-stone-700">
+                    <div class="flex flex-col items-center p-2 bg-stone-800 rounded border border-stone-700">
+                        <span class="text-xs text-stone-300 font-bold mb-1 uppercase">Mặt Trên (Top)</span>
+                        <div class="flex gap-2 items-center justify-center">
+                            <input id="cb-top-color" type="color" value="#888888">
+                            <div class="texture-upload-box" id="upload-top" onclick="document.getElementById('file-top').click()">
+                                <span class="text-base text-stone-500 font-bold">+</span>
+                                <img id="img-top" src="">
+                            </div>
+                        </div>
+                        <input type="file" id="file-top" class="hidden" accept="image/*">
+                    </div>
+
+                    <div class="flex flex-col items-center p-2 bg-stone-800 rounded border border-stone-700">
+                        <span class="text-xs text-stone-300 font-bold mb-1 uppercase">Mặt Dưới (Bottom)</span>
+                        <div class="flex gap-2 items-center justify-center">
+                            <input id="cb-bottom-color" type="color" value="#555555">
+                            <div class="texture-upload-box" id="upload-bottom" onclick="document.getElementById('file-bottom').click()">
+                                <span class="text-base text-stone-500 font-bold">+</span>
+                                <img id="img-bottom" src="">
+                            </div>
+                        </div>
+                        <input type="file" id="file-bottom" class="hidden" accept="image/*">
+                    </div>
+
+                    <div class="flex flex-col items-center p-2 bg-stone-800 rounded border border-stone-700">
+                        <span class="text-xs text-stone-300 font-bold mb-1 uppercase">Mặt Trước (Front)</span>
+                        <div class="flex gap-2 items-center justify-center">
+                            <input id="cb-front-color" type="color" value="#666666">
+                            <div class="texture-upload-box" id="upload-front" onclick="document.getElementById('file-front').click()">
+                                <span class="text-base text-stone-500 font-bold">+</span>
+                                <img id="img-front" src="">
+                            </div>
+                        </div>
+                        <input type="file" id="file-front" class="hidden" accept="image/*">
+                    </div>
+
+                    <div class="flex flex-col items-center p-2 bg-stone-800 rounded border border-stone-700">
+                        <span class="text-xs text-stone-300 font-bold mb-1 uppercase">Mặt Sau (Back)</span>
+                        <div class="flex gap-2 items-center justify-center">
+                            <input id="cb-back-color" type="color" value="#666666">
+                            <div class="texture-upload-box" id="upload-back" onclick="document.getElementById('file-back').click()">
+                                <span class="text-base text-stone-500 font-bold">+</span>
+                                <img id="img-back" src="">
+                            </div>
+                        </div>
+                        <input type="file" id="file-back" class="hidden" accept="image/*">
+                    </div>
+
+                    <div class="flex flex-col items-center p-2 bg-stone-800 rounded border border-stone-700">
+                        <span class="text-xs text-stone-300 font-bold mb-1 uppercase">Mặt Trái (Left)</span>
+                        <div class="flex gap-2 items-center justify-center">
+                            <input id="cb-left-color" type="color" value="#777777">
+                            <div class="texture-upload-box" id="upload-left" onclick="document.getElementById('file-left').click()">
+                                <span class="text-base text-stone-500 font-bold">+</span>
+                                <img id="img-left" src="">
+                            </div>
+                        </div>
+                        <input type="file" id="file-left" class="hidden" accept="image/*">
+                    </div>
+
+                    <div class="flex flex-col items-center p-2 bg-stone-800 rounded border border-stone-700">
+                        <span class="text-xs text-stone-300 font-bold mb-1 uppercase">Mặt Phải (Right)</span>
+                        <div class="flex gap-2 items-center justify-center">
+                            <input id="cb-right-color" type="color" value="#777777">
+                            <div class="texture-upload-box" id="upload-right" onclick="document.getElementById('file-right').click()">
+                                <span class="text-base text-stone-500 font-bold">+</span>
+                                <img id="img-right" src="">
+                            </div>
+                        </div>
+                        <input type="file" id="file-right" class="hidden" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-between items-center gap-2">
+                    <button id="btn-clear-textures" class="text-xs bg-red-900/80 text-red-200 px-3 py-1.5 rounded border border-red-700">Làm sạch tệp ảnh</button>
+                    <button id="btn-delete-custom-block" class="text-xs bg-zinc-700 text-stone-300 px-3 py-1.5 rounded border border-stone-500 hover:bg-zinc-600">Xóa block tùy chỉnh</button>
+                </div>
+            </div>
+
+            <div class="mt-6 flex gap-4">
+                <button id="btn-cancel-custom-block" class="mc-btn flex-1 py-2 rounded text-sm">HỦY</button>
+                <button id="btn-save-custom-block" class="mc-btn flex-1 py-2 rounded text-sm text-green-300">TẠO MỚI INSTANCE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="structure-modal" class="hidden fixed inset-0 z-[75] bg-black/85 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-stone-800 border-4 border-stone-500 p-6 rounded max-w-md w-full text-white shadow-2xl modal-fade-in">
+            <h2 class="text-xl font-bold text-yellow-400 mb-2 text-center uppercase">KHỐI CẤU TRÚC (STRUCTURE)</h2>
+            <p class="text-stone-400 text-xs text-center mb-4">Lưu lại một khu vực hình hộp chữ nhật và dán nó ở một điểm bất kỳ trong thế giới của bạn.</p>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-stone-300 text-xs uppercase font-bold mb-1">Rộng (Size X)</label>
+                        <input id="struct-size-x" type="number" value="3" min="1" max="16" class="w-full bg-stone-900 border border-stone-600 p-1.5 text-white text-xs rounded">
+                    </div>
+                    <div>
+                        <label class="block text-stone-300 text-xs uppercase font-bold mb-1">Cao (Size Y)</label>
+                        <input id="struct-size-y" type="number" value="3" min="1" max="16" class="w-full bg-stone-900 border border-stone-600 p-1.5 text-white text-xs rounded">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 gap-2">
+                    <div>
+                        <label class="block text-stone-300 text-xs uppercase font-bold mb-1">Sâu (Size Z)</label>
+                        <input id="struct-size-z" type="number" value="3" min="1" max="16" class="w-full bg-stone-900 border border-stone-600 p-1.5 text-white text-xs rounded">
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 mt-4 pt-3 border-t border-stone-700">
+                    <button id="btn-struct-copy" class="mc-btn flex-1 py-2 text-xs text-sky-300">SAO CHÉP VÙNG</button>
+                    <button id="btn-struct-paste" class="mc-btn flex-1 py-2 text-xs text-green-300">DÁN CẤU TRÚC</button>
+                </div>
+                <div id="struct-status-msg" class="text-center text-xs text-yellow-400 italic">Trống</div>
+            </div>
+            
+            <div class="mt-6 flex justify-end">
+                <button id="btn-close-structure-modal" class="mc-btn px-6 py-2 text-xs">QUAY LẠI TRÒ CHƠI</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="hud-layer" class="absolute inset-0 pointer-events-none z-20 flex flex-col justify-between p-4 hud-element" style="transform-origin: top left;">
+        <div class="flex justify-between items-start safe-left-margin safe-right-margin safe-top-padding">
+            <div id="debug-info" class="bg-black/70 p-3 rounded text-xs text-green-400 pointer-events-auto leading-relaxed border-2 border-stone-700 backdrop-blur-sm shadow-lg" style="display: none;">
+                <div class="font-bold text-yellow-400 text-sm border-b border-stone-600 pb-1 mb-1">MINECRAFT 3D ULTIMATE</div>
+                <div id="fps-counter" class="text-white font-bold">FPS: 60</div>
+                <div id="coords" class="text-sky-300">X: 0.0, Y: 0.0, Z: 0.0</div>
+                <div id="chunk-info" class="text-pink-300">Chunk: [0,0,0]</div>
+                <div id="active-chunks-info" class="text-orange-300">Total Meshes: 0</div>
+                <div id="shader-hud-info" class="text-teal-300 font-bold">Shader: LITE</div>
+                <div id="celestial-hud-info" class="text-yellow-300 font-bold">Weather: CLEAR (BETA)<br>Time: 06:00 (0 Ticks)</div>
+                <div id="fly-hud-info" class="text-red-400 font-bold hidden">CREATIVE FLY: ON</div>
+            </div>
+
+            <div class="flex flex-col gap-2 items-end ml-auto">
+                <div class="flex gap-2 pointer-events-auto">
+                    <button id="btn-toggle-hud-visibility" class="w-10 h-10 mc-btn flex items-center justify-center rounded shadow-md text-lg" title="Pause Game">⏸️</button>
+                    <button id="btn-change-view" class="mc-btn px-4 py-2 text-xs rounded text-yellow-400 shadow-md">CHẾ ĐỘ NHÌN (F5)</button>
+                    <button id="btn-screenshot" class="mc-btn px-4 py-2 text-xs rounded text-teal-300 shadow-md">ẢNH MÀN HÌNH (P)</button>
+                    <button id="btn-record" class="mc-btn px-4 py-2 text-xs rounded text-red-400 shadow-md">QUAY PHIM (R)</button>
+                </div>
+                <div class="flex gap-2 pointer-events-auto" id="hud-nav-buttons">
+                    <button id="btn-save-game" class="mc-btn px-4 py-2 text-xs rounded text-green-300 shadow-md">LƯU GAME (K)</button>
+                    <button id="btn-instruction" class="mc-btn px-4 py-2 text-xs rounded shadow-md">HƯỚNG DẪN (H)</button>
+                    <button id="btn-back-menu" class="mc-btn px-4 py-2 text-xs rounded text-red-300 shadow-md">THOÁT (ESC)</button>
+                </div>
+                <div id="save-notification" class="bg-green-600/80 text-white text-xs font-bold px-3 py-1 rounded opacity-0 transition-opacity duration-300">Đã lưu trữ thành công!</div>
+            </div>
+        </div>
+
+        <div id="item-name-popup" class="absolute bottom-24 left-1/2 -translate-x-1/2 bg-black/60 px-3 py-1.5 rounded border border-stone-700 text-sm font-bold text-yellow-300 opacity-0 transition-opacity duration-150 z-20">
+            Thanh Gỗ Sồi
+        </div>
+
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 pointer-events-auto shadow-[0_10px_20px_rgba(0,0,0,0.8)] safe-bottom-margin z-30" id="hud-hotbar-container">
+            <button id="btn-hotbar-prev" class="w-12 h-14 mc-btn flex items-center justify-center rounded-lg text-xl font-bold select-none">&lt;</button>
+
+            <div class="flex gap-1 bg-stone-900/95 p-2 border-4 border-stone-600 rounded-lg" id="hotbar-slots-wrapper">
+            </div>
+
+            <button id="btn-inventory" class="w-12 h-14 mc-btn flex items-center justify-center rounded-lg text-xl font-bold select-none text-yellow-300">...</button>
+            <button id="btn-hotbar-next" class="w-12 h-14 mc-btn flex items-center justify-center rounded-lg text-xl font-bold select-none">&gt;</button>
+        </div>
+    </div>
+
+    <div id="inventory-menu" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm pointer-events-auto">
+        <div class="bg-[#c6c6c6] border-4 border-[#555555] p-2 rounded shadow-2xl w-full max-w-lg select-none modal-fade-in">
+            <div class="flex justify-between items-center mb-2 px-3 py-1 bg-[#8b8b8b] border-2 border-white/50 text-white font-bold shadow-inner">
+                <span>KHO ĐỒ - CHỌN VẬT LIỆU</span>
+                <button id="btn-close-inv" class="text-red-300 hover:text-red-500 text-xl font-bold px-2 py-0 border border-transparent hover:border-red-500 rounded">×</button>
+            </div>
+            <div class="flex justify-center gap-2 mb-3">
+                <button id="btn-trigger-custom-builder" class="mc-btn w-full py-2 text-xs uppercase tracking-wider text-purple-300">
+                    🔨 Tạo block tùy chỉnh mới
+                </button>
+            </div>
+            <div class="grid grid-cols-6 sm:grid-cols-8 gap-2 p-3 bg-[#8b8b8b] border-2 border-white/20 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] h-64 overflow-y-auto" id="inventory-grid">
+            </div>
+        </div>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+    <div id="crosshair"></div>
+
+    <div id="modal-instruction-overlay" class="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4 hidden backdrop-blur-sm cursor-pointer">
+        <div class="bg-stone-800 border-4 border-stone-500 p-8 max-w-xl w-full text-white rounded shadow-2xl cursor-default max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <h2 class="text-3xl font-bold text-yellow-400 mb-6 text-center drop-shadow-md">HƯỚNG DẪN ĐIỀU KHIỂN</h2>
+            <div class="space-y-4 text-base bg-stone-900 p-4 rounded border inset border-stone-700 max-h-[50vh] overflow-y-auto">
+                <div class="border-b border-stone-700 pb-4">
+                    <strong class="text-green-400 text-lg block mb-2">✦ MÁY TÍNH (PC):</strong>
+                    <p class="pl-4 mt-1 leading-relaxed">- Di chuyển: <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">W</span> <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">A</span> <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">S</span> <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">D</span></p>
+                    <p class="pl-4 leading-relaxed">- Ẩn/Hiện HUD: <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">F1</span></p>
+                    <p class="pl-4 leading-relaxed">- Bật/Tắt Giao diện Debug: <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">F3</span></p>
+                    <p class="pl-4 leading-relaxed">- Nhấn đúp <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">Spacebar</span>: Bật chế độ bay lơ lửng</p>
+                    <p class="pl-4 leading-relaxed">- Bay lên / Nhảy: <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">Spacebar</span></p>
+                    <p class="pl-4 leading-relaxed">- Hạ độ cao bay: <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">Left Shift</span></p>
+                    <p class="pl-4 leading-relaxed">- Chạy nhanh: Giữ <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">Left Ctrl</span></p>
+                    <p class="pl-4 leading-relaxed">- Ngồi / Trườn: Giữ <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">Left Shift</span></p>
+                    <p class="pl-4 leading-relaxed">- Khóa/Mở con trỏ: Click chuột vào canvas game</p>
+                    <p class="pl-4 leading-relaxed">- Phá hủy khối: <span class="text-red-400 font-bold">Chuột trái</span></p>
+                    <p class="pl-4 leading-relaxed">- Đặt khối: <span class="text-blue-400 font-bold">Chuột phải</span></p>
+                    <p class="pl-4 leading-relaxed">- Chọn ô Hotbar: Từ phím <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">1</span> đến <span class="bg-stone-700 px-2 py-0.5 rounded text-yellow-200">7</span></p>
+                    <p class="pl-4 leading-relaxed">- Phím tắt: <span class="bg-stone-700 px-1 rounded">E</span> (Mở rương), <span class="bg-stone-700 px-1 rounded">F5</span> (Chế độ nhìn), <span class="bg-stone-700 px-1 rounded">H</span> (Bảng giúp đỡ)</p>
+                </div>
+                <div class="pt-2">
+                    <strong class="text-green-400 text-lg block mb-2">✦ ĐIỆN THOẠI (TOUCH):</strong>
+                    <p class="pl-4 mt-1 leading-relaxed">- Di chuyển: Điều khiển Joystick ở góc dưới bên trái màn hình</p>
+                    <p class="pl-4 leading-relaxed">- Nhấn đúp nút <span class="text-yellow-400 font-bold">Jump</span>: Bật/Tắt chế độ bay sáng tạo</p>
+                    <p class="pl-4 leading-relaxed">- Xoay camera: Vuốt trên nửa bên phải màn hình</p>
+                    <p class="pl-4 leading-relaxed">- Lướt Hotbar: Nhấn phím mũi tên <span class="text-yellow-400 font-bold">&lt;</span> và <span class="text-yellow-400 font-bold">&gt;</span></p>
+                </div>
+            </div>
+            <p class="text-stone-400 text-center text-sm mt-6 animate-pulse">Nhấp bên ngoài thẻ giúp đỡ hoặc ấn xác nhận để đóng</p>
+            <div class="mt-4 flex justify-center">
+                <button id="btn-close-instruction" class="mc-btn px-10 py-3 rounded text-lg font-bold">XÁC NHẬN</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-control-left" class="mobile-control absolute bottom-10 left-10 flex-col items-center gap-3 z-30 select-none safe-left-margin safe-bottom-margin pointer-events-auto">
+        <div class="flex flex-col gap-2 w-full">
+            <div class="flex gap-2">
+                <button id="btn-mobile-sprint" class="w-16 h-12 rounded-lg bg-orange-600/60 border-b-4 border-orange-900/70 text-white font-bold text-center flex items-center justify-center text-xs active:bg-orange-700 shadow-lg backdrop-blur-sm">
+                    CHẠY NHANH
+                </button>
+                <button id="btn-mobile-sneak" class="w-16 h-12 rounded-lg bg-stone-600/60 border-b-4 border-stone-900/70 text-white font-bold text-center flex items-center justify-center text-xs active:bg-stone-700 shadow-lg backdrop-blur-sm">
+                    CÚI NGƯỜI
+                </button>
+            </div>
+            <div id="mobile-fly-buttons" class="hidden flex gap-2">
+                <button id="btn-mobile-fly-up" class="w-16 h-12 rounded-lg bg-yellow-600/60 border-b-4 border-yellow-900/70 text-white font-bold text-center flex items-center justify-center text-base active:bg-yellow-700 shadow-lg">
+                    ⬆️
+                </button>
+                <button id="btn-mobile-fly-down" class="w-16 h-12 rounded-lg bg-yellow-600/60 border-b-4 border-yellow-900/70 text-white font-bold text-center flex items-center justify-center text-base active:bg-yellow-700 shadow-lg">
+                    ⬇️
+                </button>
+            </div>
+        </div>
+        <div id="mobile-control-joystick" class="w-36 h-36 bg-transparent rounded-full border-2 border-white/0 items-center justify-center touch-none">
+            <div id="joystick-knob" class="w-14 h-14 bg-white/5 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.05)] border-2 border-white/10 transform translate-x-0 translate-y-0 transition-transform duration-75"></div>
+        </div>
+    </div>
+
+    <div id="mobile-control-buttons" class="mobile-control absolute bottom-24 right-8 flex-col gap-4 items-end z-30 select-none safe-right-margin safe-bottom-margin pointer-events-auto">
+        <div class="flex gap-4">
+            <button id="btn-mobile-break" class="w-20 h-20 rounded-xl bg-red-600/60 border-b-8 border-red-900/70 text-white font-bold text-center flex items-center justify-center text-sm active:bg-red-700 active:border-b-2 active:mt-1 shadow-2xl backdrop-blur-sm">
+                ĐẬP KHỐI
+            </button>
+            <button id="btn-mobile-place" class="w-20 h-20 rounded-xl bg-blue-600/60 border-b-8 border-blue-900/70 text-white font-bold text-center flex items-center justify-center text-sm active:bg-blue-700 active:border-b-2 active:mt-1 shadow-2xl backdrop-blur-sm">
+                ĐẶT KHỐI
+            </button>
+        </div>
+        <button id="btn-mobile-jump" class="w-24 h-16 mr-10 rounded-xl bg-green-600/60 border-b-6 border-green-900/70 text-white font-bold text-center flex items-center justify-center text-base active:bg-green-700 active:border-b-2 active:mt-1 shadow-2xl backdrop-blur-sm">
+            NHẢY
+        </button>
+    </div>
+
+</div>
+
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let isSoundEnabled = true;
+
+function createBeep(freq, type, duration, vol) {
+    if (!isSoundEnabled || audioCtx.state === 'suspended') return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.1, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    } catch(e) {}
+}
+
+function playClickSound() { createBeep(800, 'sine', 0.1, 0.4); }
+function playPlaceSound() { createBeep(160, 'triangle', 0.15, 0.7); }
+function playBreakSound() { createBeep(90, 'square', 0.2, 0.6); }
+function playStepSound() { createBeep(210, 'noise', 0.08, 0.15); }
+
+document.body.addEventListener('click', () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}, { once: true });
+
+const BLOCK_TYPES = {
+    AIR: 0,
+    DIRT: 1,
+    GRASS: 2,
+    STONE: 3,
+    WOOD: 4,
+    LEAVES: 5,
+    GLASS: 6,
+    COBBLESTONE: 7,
+    SAND: 8,
+    BRICK: 9,
+    GOLD_ORE: 10,
+    IRON_ORE: 11,
+    BEDROCK: 13,
+    TORCH: 14,
+    STRUCTURE: 15,
+    CUSTOM: 100
+};
+
+const BLOCK_COLORS = {
+    [BLOCK_TYPES.DIRT]: { base: '#5c4033', noise: '#3d2b22' },
+    [BLOCK_TYPES.GRASS]: { base: '#5c4033', noise: '#3d2b22', top: '#5b8c31' },
+    [BLOCK_TYPES.STONE]: { base: '#7d7d7d', noise: '#5c5c5c' },
+    [BLOCK_TYPES.WOOD]: { base: '#735135', noise: '#4d3623', top: '#a38260' },
+    [BLOCK_TYPES.LEAVES]: { base: '#3a5f25', noise: '#243c17' },
+    [BLOCK_TYPES.GLASS]: { base: '#aaddff', noise: '#ffffff' },
+    [BLOCK_TYPES.COBBLESTONE]: { base: '#6a6a6a', noise: '#3a3a3a' },
+    [BLOCK_TYPES.SAND]: { base: '#dcb879', noise: '#c0a060' },
+    [BLOCK_TYPES.BRICK]: { base: '#994433', noise: '#ccbbbb' },
+    [BLOCK_TYPES.GOLD_ORE]: { base: '#7d7d7d', noise: '#ffd700' },
+    [BLOCK_TYPES.IRON_ORE]: { base: '#7d7d7d', noise: '#d3b59f' },
+    [BLOCK_TYPES.BEDROCK]: { base: '#2c2c2c', noise: '#111111' },
+    [BLOCK_TYPES.TORCH]: { base: '#d0a200', noise: '#ffaa00' },
+    [BLOCK_TYPES.STRUCTURE]: { base: '#4d4d5a', noise: '#bf55ec', top: '#8e44ad' }
+};
+
+const BLOCK_NAMES = {
+    [BLOCK_TYPES.DIRT]: "Khối Đất",
+    [BLOCK_TYPES.GRASS]: "Khối Cỏ",
+    [BLOCK_TYPES.STONE]: "Khối Đá",
+    [BLOCK_TYPES.WOOD]: "Khối Gỗ Sồi",
+    [BLOCK_TYPES.LEAVES]: "Khối Lá Sồi",
+    [BLOCK_TYPES.GLASS]: "Khối Thủy Tinh",
+    [BLOCK_TYPES.COBBLESTONE]: "Đá Cuội",
+    [BLOCK_TYPES.SAND]: "Khối Cát",
+    [BLOCK_TYPES.BRICK]: "Khối Gạch",
+    [BLOCK_TYPES.GOLD_ORE]: "Quặng Vàng",
+    [BLOCK_TYPES.IRON_ORE]: "Quặng Sắt",
+    [BLOCK_TYPES.BEDROCK]: "Đá Nền",
+    [BLOCK_TYPES.TORCH]: "Đuốc",
+    [BLOCK_TYPES.STRUCTURE]: "Khối Cấu Trúc (Structure Block)"
+};
+
+const CHUNK_SIZE = 8;
+const SAVE_PREFIX = "mc_3d_world_v2_";
+const WORLD_LIMIT = 12550821; 
+
+let currentWorldName = "Thế giới mới";
+let currentWorldId = "";
+let currentSeed = 12345;
+let selectedRenderDistance = 4;
+let selectedTerrainType = "standard";
+
+let controlSensitivity = 1.0;
+let isCloudsEnabled = true;
+let isStarsEnabled = true;
+let isWeatherEnabled = true;
+let isFogEnabled = true;
+let isParticlesEnabled = true;
+let isFlyEnabled = false;
+let isHudVisible = true;
+let isDebugVisible = false;
+let isMobileBtnsVisible = true;
+let hudScale = 1.0;
+let shaderMode = "lite";
+
+let worldAlwaysDay = false;
+let worldWeatherCycle = true;
+
+let scene, camera, renderer;
+let activeBlockIndex = 0;
+let blockSequence = [BLOCK_TYPES.GRASS, BLOCK_TYPES.DIRT, BLOCK_TYPES.STONE, BLOCK_TYPES.WOOD, BLOCK_TYPES.TORCH, BLOCK_TYPES.GLASS, BLOCK_TYPES.STRUCTURE];
+const MAX_HOTBAR_SLOTS = 7;
+
+let loadedChunks = {};
+let worldChanges = {}; 
+let isGameRunning = false;
+
+let gameTicks = 6000; 
+let ticksPerSecond = 20;
+
+let weatherType = "clear"; 
+let weatherTicks = -3600; 
+let transitionProgress = 0.0;
+let weatherParticles = null;
+let lightningFlashIntensity = 0;
+
+let sunLight, ambientLight, moonLight;
+let sunMesh, moonMesh;
+let starsGroup = null;
+let cloudsGroup = null;
+
+const blockBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const glassBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const torchGeometry = new THREE.BoxGeometry(0.15, 0.7, 0.15);
+
+let cameraViewMode = 0;
+let playerMesh = null;
+
+const player = {
+    position: new THREE.Vector3(0, 30, 0),
+    velocity: new THREE.Vector3(0, 0, 0),
+    rotation: new THREE.Euler(0, 0, 0, 'YXZ'),
+    height: 2.0, 
+    radius: 0.35,
+    speed: 5.5,
+    sprintMultiplier: 1.6,
+    sneakMultiplier: 0.5,
+    isSprinting: false,
+    isSneaking: false,
+    flySpeed: 12.0,
+    jumpForce: 6.5,
+    isGrounded: false,
+    lastChunkCoords: { cx: 999, cz: 999 }
+};
+
+const keys = { w: false, a: false, s: false, d: false, space: false, flyUp: false, flyDown: false };
+let joystickActive = false, joystickStart = { x: 0, y: 0 }, joystickMove = { x: 0, y: 0 }, joystickMaxDist = 60;
+let touchStart = { x: 0, y: 0 }, isTouchingRight = false;
+let raycaster = new THREE.Raycaster(), hoverBox;
+let lastTime = performance.now(), fpsTimer = 0, fpsCounter = 0;
+let pendingShaderMode = "lite";
+let mediaRecorder = null, recordedChunks = [], isRecording = false;
+
+let lastJumpPressTime = 0;
+
+let customBlocksRegistry = {};
+let customBlockCounter = 0;
+
+let pendingCustomBlockConfig = {
+    name: "Khối tùy chỉnh 1",
+    faces: {
+        top: { color: "#55aa55", texture: null },
+        bottom: { color: "#8a5c3c", texture: null },
+        front: { color: "#aa5555", texture: null },
+        back: { color: "#aa5555", texture: null },
+        left: { color: "#5555aa", texture: null },
+        right: { color: "#5555aa", texture: null }
+    }
+};
+
+let activeEditingWorldId = "";
+
+let clipboardStructure = null;
+
+function initHotbarDOM() {
+    const wrapper = document.getElementById('hotbar-slots-wrapper');
+    wrapper.innerHTML = '';
+    for(let i=0; i<MAX_HOTBAR_SLOTS; i++) {
+        const div = document.createElement('div');
+        div.className = `hotbar-slot w-14 h-14 relative cursor-pointer border-4 ${i===0?'border-yellow-400':'border-transparent'} bg-stone-800 flex items-center justify-center rounded`;
+        div.setAttribute('data-index', i);
+        div.innerHTML = `<canvas id="slot-${i}-preview" class="w-10 h-10" width="40" height="40"></canvas><span class="absolute top-0 left-1 text-[10px] text-stone-400 font-bold">${i+1}</span>`;
+        wrapper.appendChild(div);
+    }
+}
+
+function loadGlobalSettings() {
+    const saved = localStorage.getItem('mc_3d_global_settings');
+    if(saved) {
+        try {
+            const s = JSON.parse(saved);
+            controlSensitivity = s.controlSensitivity !== undefined ? s.controlSensitivity : 1.0;
+            isCloudsEnabled = s.isCloudsEnabled !== undefined ? s.isCloudsEnabled : true;
+            isStarsEnabled = s.isStarsEnabled !== undefined ? s.isStarsEnabled : true;
+            isWeatherEnabled = s.isWeatherEnabled !== undefined ? s.isWeatherEnabled : true;
+            isFogEnabled = s.isFogEnabled !== undefined ? s.isFogEnabled : true;
+            isParticlesEnabled = s.isParticlesEnabled !== undefined ? s.isParticlesEnabled : true;
+            isFlyEnabled = s.isFlyEnabled !== undefined ? s.isFlyEnabled : false;
+            isSoundEnabled = s.isSoundEnabled !== undefined ? s.isSoundEnabled : true;
+            isHudVisible = s.isHudVisible !== undefined ? s.isHudVisible : true;
+            isDebugVisible = s.isDebugVisible !== undefined ? s.isDebugVisible : false;
+            isMobileBtnsVisible = s.isMobileBtnsVisible !== undefined ? s.isMobileBtnsVisible : true;
+            hudScale = s.hudScale || 1.0;
+            shaderMode = s.shaderMode || "lite";
+            if (s.blockSequence) blockSequence = s.blockSequence;
+        } catch(e) {}
+    }
+    const regSaved = localStorage.getItem('mc_3d_custom_registry');
+    if(regSaved) {
+        try { 
+            customBlocksRegistry = JSON.parse(regSaved);
+            let maxId = 0;
+            for(let idStr in customBlocksRegistry) {
+                const num = parseInt(idStr);
+                if (num > maxId) maxId = num;
+            }
+            customBlockCounter = maxId;
+        } catch(e){}
+    }
+}
+
+function saveGlobalSettings() {
+    const s = { 
+        controlSensitivity, isCloudsEnabled, isStarsEnabled, isWeatherEnabled, 
+        isFogEnabled, isParticlesEnabled, isFlyEnabled, isSoundEnabled, 
+        isHudVisible, isDebugVisible, isMobileBtnsVisible, hudScale, shaderMode, blockSequence 
+    };
+    localStorage.setItem('mc_3d_global_settings', JSON.stringify(s));
+    localStorage.setItem('mc_3d_custom_registry', JSON.stringify(customBlocksRegistry));
+}
+
+function generateUniqueId() {
+    return 'wld_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+}
+
+function getSavedWorldsList() {
+    let worlds = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(SAVE_PREFIX)) {
+            const dataStr = localStorage.getItem(key);
+            try {
+                const data = unpackWorldData(dataStr);
+                worlds.push({
+                    id: data.id || key.replace(SAVE_PREFIX, ''),
+                    key: key,
+                    name: data.name || "Không tên",
+                    seed: data.seed,
+                    createdDate: data.createdDate || "Không rõ",
+                    lastPlayed: data.lastPlayed || "Không rõ",
+                    changesCount: Object.keys(data.changes || {}).length,
+                    alwaysDay: data.alwaysDay || false,
+                    weatherCycle: data.weatherCycle !== undefined ? data.weatherCycle : true,
+                    renderDistance: data.renderDistance !== undefined ? data.renderDistance : 4,
+                    terrainType: data.terrainType || "standard",
+                    weatherType: data.weatherType || "clear",
+                    player: data.player
+                });
+            } catch(e) {}
+        }
+    }
+    return worlds.sort((a,b) => new Date(b.lastPlayed) - new Date(a.lastPlayed));
+}
+
+function packWorldData(data) {
+    const changesMap = data.changes || {};
+    const flatChanges = [];
+    for(let coords in changesMap) {
+        flatChanges.push(`${coords}=${changesMap[coords]}`);
+    }
+    const packedObj = {
+        i: data.id,
+        n: data.name,
+        s: data.seed,
+        c: data.createdDate,
+        l: data.lastPlayed,
+        ch: flatChanges.join('|'),
+        ad: data.alwaysDay ? 1 : 0,
+        wc: data.weatherCycle ? 1 : 0,
+        rd: data.renderDistance || 4,
+        tt: data.terrainType || "standard",
+        wt: data.weatherType || "clear",
+        p: data.player ? [
+            Math.round(data.player.x*10)/10,
+            Math.round(data.player.y*10)/10,
+            Math.round(data.player.z*10)/10,
+            Math.round(data.player.rx*100)/100,
+            Math.round(data.player.ry*100)/100
+        ] : null
+    };
+    return JSON.stringify(packedObj);
+}
+
+function unpackWorldData(str) {
+    try {
+        const raw = JSON.parse(str);
+        if (raw.i === undefined) return raw; 
+        const changesMap = {};
+        if (raw.ch) {
+            const pairs = raw.ch.split('|');
+            for(let i=0; i<pairs.length; i++) {
+                const parts = pairs[i].split('=');
+                if (parts.length === 2) {
+                    changesMap[parts[0]] = parseInt(parts[1]);
+                }
+            }
+        }
+        return {
+            id: raw.i,
+            name: raw.n,
+            seed: raw.s,
+            createdDate: raw.c,
+            lastPlayed: raw.l,
+            changes: changesMap,
+            alwaysDay: raw.ad === 1,
+            weatherCycle: raw.wc === 1,
+            renderDistance: raw.rd,
+            terrainType: raw.tt,
+            weatherType: raw.wt,
+            player: raw.p ? {
+                x: raw.p[0],
+                y: raw.p[1],
+                z: raw.p[2],
+                rx: raw.p[3],
+                ry: raw.p[4]
+            } : null
+        };
+    } catch(e) {
+        return {};
+    }
+}
+
+function loadWorldDatabase(worldId) {
+    const key = SAVE_PREFIX + worldId;
+    const dataStr = localStorage.getItem(key);
+    if(dataStr) {
+        try {
+            const data = unpackWorldData(dataStr);
+            currentWorldId = data.id || worldId;
+            currentWorldName = data.name;
+            currentSeed = data.seed;
+            worldAlwaysDay = data.alwaysDay || false;
+            worldWeatherCycle = data.weatherCycle !== undefined ? data.weatherCycle : true;
+            selectedRenderDistance = data.renderDistance !== undefined ? data.renderDistance : 4;
+            selectedTerrainType = data.terrainType || "standard";
+            weatherType = data.weatherType || "clear";
+            worldChanges = data.changes || {};
+            if(data.player) {
+                player.position.set(data.player.x, data.player.y, data.player.z);
+                player.rotation.set(data.player.rx, data.player.ry, 0, 'YXZ');
+            }
+            return true;
+        } catch(e) { console.error(e); }
+    }
+    return false;
+}
+
+function saveWorldDatabase() {
+    if (!currentWorldId) currentWorldId = generateUniqueId();
+    const key = SAVE_PREFIX + currentWorldId;
+    const now = new Date();
+    
+    let existingCreated = now.toLocaleString();
+    const existing = localStorage.getItem(key);
+    if(existing) {
+        try { existingCreated = unpackWorldData(existing).createdDate || existingCreated; } catch(e){}
+    }
+
+    const data = {
+        id: currentWorldId,
+        name: currentWorldName,
+        seed: currentSeed,
+        createdDate: existingCreated,
+        lastPlayed: now.toLocaleString(),
+        changes: worldChanges,
+        alwaysDay: worldAlwaysDay,
+        weatherCycle: worldWeatherCycle,
+        renderDistance: selectedRenderDistance,
+        terrainType: selectedTerrainType,
+        weatherType: weatherType,
+        player: { 
+            x: player.position.x, 
+            y: player.position.y, 
+            z: player.position.z, 
+            rx: player.rotation.x, 
+            ry: player.rotation.y 
+        }
+    };
+    try {
+        const packed = packWorldData(data);
+        localStorage.setItem(key, packed);
+        const notif = document.getElementById('save-notification');
+        if(notif) {
+            notif.classList.remove('opacity-0');
+            setTimeout(() => { notif.classList.add('opacity-0'); }, 2000);
+        }
+    } catch(e) { alert("Giới hạn bộ nhớ LocalStorage đã đạt tối đa. Vui lòng dọn dẹp các thế giới khác."); }
+}
+
+function cloneWorld(worldId) {
+    const sourceKey = SAVE_PREFIX + worldId;
+    const sourceDataStr = localStorage.getItem(sourceKey);
+    if (sourceDataStr) {
+        try {
+            const data = unpackWorldData(sourceDataStr);
+            const newId = generateUniqueId();
+            data.id = newId;
+            data.name = data.name + " (Bản sao)";
+            data.createdDate = new Date().toLocaleString();
+            data.lastPlayed = new Date().toLocaleString();
+            
+            localStorage.setItem(SAVE_PREFIX + newId, packWorldData(data));
+            playClickSound();
+            renderWorldsMenu();
+        } catch(e) { console.error(e); }
+    }
+}
+
+function exportWorldToJson(worldId) {
+    const key = SAVE_PREFIX + worldId;
+    const dataStr = localStorage.getItem(key);
+    if (dataStr) {
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `world_export_${worldId}.json`;
+        link.click();
+        playClickSound();
+    }
+}
+
+function mulberry32(a) {
+    return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+}
+let randomFunc = mulberry32(currentSeed);
+
+function fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+function lerp(t, a, b) { return a + t * (b - a); }
+function grad(hash, x, y, z) {
+    const h = hash & 15;
+    const u = h < 8 ? x : y;
+    const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+    return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+}
+const p = new Uint8Array(512);
+function initPermutation() {
+    const rand = mulberry32(currentSeed);
+    for(let i=0; i<256; i++) p[i] = Math.floor(rand() * 256);
+    for(let i=0; i<256; i++) p[256+i] = p[i];
+}
+
+function noise3D(x, y, z) {
+    const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+    x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+    const u = fade(x), v = fade(y), w = fade(z);
+    const A = p[X  ]+Y, AA = p[A]+Z, AB = p[A+1]+Z;
+    const B = p[X+1]+Y, BA = p[B]+Z, BB = p[B+1]+Z;
+    return lerp(w, lerp(v, lerp(u, grad(p[AA  ], x  , y  , z   ), grad(p[BA  ], x-1, y  , z   )),
+    lerp(u, grad(p[AB  ], x  , y-1, z   ), grad(p[BB  ], x-1, y-1, z   ))),
+    lerp(v, lerp(u, grad(p[AA+1], x  , y  , z-1 ), grad(p[BA+1], x-1, y  , z-1 )),
+    lerp(u, grad(p[AB+1], x  , y-1, z-1 ), grad(p[BB+1], x-1, y-1, z-1 ))));
+}
+
+function getNoiseHeight(x, z) {
+    if (selectedTerrainType === "flat") return 4;
+    const offset = (currentSeed % 1000) * 0.5;
+    const nx = x * 0.05 + offset, nz = z * 0.05 + offset;
+    let height = Math.sin(nx) * 4 + Math.cos(nz) * 4;
+    if (selectedTerrainType === "islands") {
+        const dist = Math.sqrt(x*x + z*z);
+        return Math.floor(Math.max(0, (height + 10) * Math.max(0, 1 - dist/60)));
+    }
+    if (selectedTerrainType === "desert") return Math.floor(Math.sin(nx*0.8)*2 + 6);
+    if (selectedTerrainType === "mountains") {
+        let m = noise3D(nx*0.5, 0, nz*0.5) * 20;
+        m += noise3D(nx*2, 0, nz*2) * 5;
+        return Math.floor(Math.max(4, m + 15));
+    }
+    height += noise3D(nx, 0, nz) * 5 + 10;
+    return Math.floor(height);
+}
+
+function getCaveDensity(x, y, z) {
+    if (selectedTerrainType !== "caves") return 1;
+    const n = noise3D(x*0.1, y*0.1, z*0.1);
+    return n;
+}
+
+class Chunk {
+    constructor(cx, cy, cz) {
+        this.cx = cx; this.cy = cy; this.cz = cz;
+        this.worldX = cx * CHUNK_SIZE; this.worldY = cy * CHUNK_SIZE; this.worldZ = cz * CHUNK_SIZE;
+        this.blocks = new Uint16Array(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE);
+        this.meshes = [];
+        this.isGenerated = false;
+    }
+    getIndex(lx, ly, lz) { return lx + ly * CHUNK_SIZE + lz * CHUNK_SIZE * CHUNK_SIZE; }
+    setLocalBlock(lx, ly, lz, type) { this.blocks[this.getIndex(lx, ly, lz)] = type; }
+    getLocalBlock(lx, ly, lz) {
+        if (lx<0 || lx>=CHUNK_SIZE || ly<0 || ly>=CHUNK_SIZE || lz<0 || lz>=CHUNK_SIZE) return BLOCK_TYPES.AIR;
+        return this.blocks[this.getIndex(lx, ly, lz)];
+    }
+    
+    generateData() {
+        if (this.isGenerated) return;
+        for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+            const wx = this.worldX + lx;
+            for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+                const wz = this.worldZ + lz;
+                const terrainHeight = getNoiseHeight(wx, wz);
+                for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+                    const wy = this.worldY + ly;
+                    if (wy < 0 || wy >= 64) continue;
+                    let type = BLOCK_TYPES.AIR;
+
+                    const key = `${wx},${wy},${wz}`;
+                    if(worldChanges[key] !== undefined) {
+                        type = worldChanges[key];
+                        this.setLocalBlock(lx, ly, lz, type);
+                        continue;
+                    }
+
+                    if (wy === 0) {
+                        type = BLOCK_TYPES.BEDROCK;
+                        this.setLocalBlock(lx, ly, lz, type);
+                        continue;
+                    }
+
+                    if(getCaveDensity(wx, wy, wz) < -0.2 && wy < terrainHeight - 3) {
+                        this.setLocalBlock(lx, ly, lz, BLOCK_TYPES.AIR);
+                        continue;
+                    }
+
+                    if (wy === terrainHeight) {
+                        if (selectedTerrainType === "desert") type = BLOCK_TYPES.SAND;
+                        else if (selectedTerrainType === "caves") type = BLOCK_TYPES.STONE;
+                        else type = BLOCK_TYPES.GRASS;
+                    } else if (wy < terrainHeight && wy >= terrainHeight - 3) {
+                        if (selectedTerrainType === "desert") type = BLOCK_TYPES.SAND;
+                        else if (selectedTerrainType === "caves") type = BLOCK_TYPES.STONE;
+                        else type = BLOCK_TYPES.DIRT;
+                    } else if (wy < terrainHeight - 3) {
+                        type = BLOCK_TYPES.STONE;
+                        if(Math.random() < 0.02) type = BLOCK_TYPES.IRON_ORE;
+                        else if(Math.random() < 0.005) type = BLOCK_TYPES.GOLD_ORE;
+                    }
+
+                    if (selectedTerrainType !== "flat" && (selectedTerrainType === "standard" || selectedTerrainType === "mountains" || selectedTerrainType === "islands") && type === BLOCK_TYPES.GRASS && wy < 40) {
+                        const localRand = mulberry32(wx * 13 + wz * 29 + currentSeed)();
+                        if (localRand < 0.015) queueTreeGeneration(wx, wy + 1, wz);
+                    }
+
+                    if (type !== BLOCK_TYPES.AIR) this.setLocalBlock(lx, ly, lz, type);
+                }
+            }
+        }
+        this.isGenerated = true;
+    }
+    
+    buildMesh() {
+        this.clearMesh();
+        for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+            for (let ly = 0; ly < CHUNK_SIZE; ly++) {
+                for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+                    const type = this.getLocalBlock(lx, ly, lz);
+                    if (type !== BLOCK_TYPES.AIR) {
+                        if (type !== BLOCK_TYPES.TORCH && this.isBlockFullyObstructed(lx, ly, lz)) continue;
+                        const mats = getBlockMaterials(type);
+                        const geo = (type === BLOCK_TYPES.GLASS) ? glassBoxGeometry : (type === BLOCK_TYPES.TORCH ? torchGeometry : blockBoxGeometry);
+                        const mesh = new THREE.Mesh(geo, mats);
+                        if(type === BLOCK_TYPES.TORCH) {
+                            mesh.position.set(this.worldX + lx + 0.5, this.worldY + ly + 0.35, this.worldZ + lz + 0.5);
+                        } else {
+                            mesh.position.set(this.worldX + lx + 0.5, this.worldY + ly + 0.5, this.worldZ + lz + 0.5);
+                        }
+                        mesh.userData = { globalCoords: { x: this.worldX + lx, y: this.worldY + ly, z: this.worldZ + lz }, chunkCoords: { cx: this.cx, cy: this.cy, cz: this.cz }, localCoords: { lx, ly, lz }, type: type };
+                        if(shaderMode === "max" && type !== BLOCK_TYPES.GLASS && type !== BLOCK_TYPES.LEAVES && type !== BLOCK_TYPES.TORCH) {
+                            mesh.castShadow = true; mesh.receiveShadow = true;
+                        }
+                        scene.add(mesh);
+                        this.meshes.push(mesh);
+                    }
+                }
+            }
+        }
+    }
+    
+    isBlockFullyObstructed(lx, ly, lz) {
+        const neighbors = [[lx+1,ly,lz], [lx-1,ly,lz], [lx,ly+1,lz], [lx,ly-1,lz], [lx,ly,lz+1], [lx,ly,lz-1]];
+        const myType = this.getLocalBlock(lx, ly, lz);
+        for (const [nx, ny, nz] of neighbors) {
+            let nt;
+            if (nx<0 || nx>=CHUNK_SIZE || ny<0 || ny>=CHUNK_SIZE || nz<0 || nz>=CHUNK_SIZE) {
+                nt = getGlobalBlockAt(this.worldX+nx, this.worldY+ny, this.worldZ+nz);
+            } else {
+                nt = this.getLocalBlock(nx, ny, nz);
+            }
+            if (nt === BLOCK_TYPES.AIR || nt === BLOCK_TYPES.LEAVES || nt === BLOCK_TYPES.GLASS || nt === BLOCK_TYPES.TORCH) return false;
+            if (myType === BLOCK_TYPES.GLASS && nt !== BLOCK_TYPES.GLASS) return false;
+        }
+        return true;
+    }
+    clearMesh() {
+        for (const mesh of this.meshes) scene.remove(mesh);
+        this.meshes = [];
+    }
+}
+
+const pendingTrees = {};
+function queueTreeGeneration(wx, wy, wz) { pendingTrees[`${wx},${wy},${wz}`] = true; }
+function applyPendingTrees() {
+    for (const key in pendingTrees) {
+        const [wx, wy, wz] = key.split(',').map(Number);
+        for (let h = 0; h < 4; h++) setGlobalBlockAt(wx, wy + h, wz, BLOCK_TYPES.WOOD, false);
+        for (let lx = -2; lx <= 2; lx++) {
+            for (let lz = -2; lz <= 2; lz++) {
+                for (let ly = 2; ly <= 5; ly++) {
+                    if (lx===0 && lz===0 && ly<4) continue;
+                    if (Math.abs(lx)+Math.abs(lz)+Math.abs(ly-3) > 4) continue;
+                    if(getGlobalBlockAt(wx+lx, wy+ly, wz+lz) === BLOCK_TYPES.AIR)
+                        setGlobalBlockAt(wx+lx, wy+ly, wz+lz, BLOCK_TYPES.LEAVES, false);
+                }
+            }
+        }
+    }
+    for (const key in pendingTrees) delete pendingTrees[key];
+}
+
+function getGlobalBlockAt(wx, wy, wz) {
+    if(wy<0 || wy>=64) return BLOCK_TYPES.AIR;
+    const key = `${wx},${wy},${wz}`;
+    if(worldChanges[key] !== undefined) return worldChanges[key];
+
+    const cx = Math.floor(wx / CHUNK_SIZE), cy = Math.floor(wy / CHUNK_SIZE), cz = Math.floor(wz / CHUNK_SIZE);
+    const chunkKey = `${cx},${cy},${cz}`;
+    const chunk = loadedChunks[chunkKey];
+    if (!chunk) return BLOCK_TYPES.AIR;
+    const lx = ((wx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+    const ly = ((wy % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+    const lz = ((wz % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+    return chunk.getLocalBlock(lx, ly, lz);
+}
+
+function setGlobalBlockAt(wx, wy, wz, type, saveToChanges = true) {
+    if(wy<0 || wy>=64) return null;
+    const cx = Math.floor(wx / CHUNK_SIZE), cy = Math.floor(wy / CHUNK_SIZE), cz = Math.floor(wz / CHUNK_SIZE);
+    const chunkKey = `${cx},${cy},${cz}`;
+    let chunk = loadedChunks[chunkKey];
+    if (!chunk) { chunk = new Chunk(cx, cy, cz); loadedChunks[chunkKey] = chunk; }
+    const lx = ((wx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+    const ly = ((wy % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+    const lz = ((wz % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+    chunk.setLocalBlock(lx, ly, lz, type);
+
+    if(saveToChanges) {
+        worldChanges[`${wx},${wy},${wz}`] = type;
+    }
+    return chunk;
+}
+
+function updateChunksAroundPlayer(forceUpdate = false) {
+    const px = Math.floor(player.position.x / CHUNK_SIZE);
+    const pz = Math.floor(player.position.z / CHUNK_SIZE);
+    if (!forceUpdate && player.lastChunkCoords.cx === px && player.lastChunkCoords.cz === pz) return;
+    player.lastChunkCoords.cx = px; player.lastChunkCoords.cz = pz;
+    const r = selectedRenderDistance;
+    let totalActiveMeshes = 0;
+    for (const key in loadedChunks) {
+        const chunk = loadedChunks[key];
+        if (Math.abs(chunk.cx - px) > r + 1 || Math.abs(chunk.cz - pz) > r + 1) chunk.clearMesh();
+    }
+    for (let cx = px - r; cx <= px + r; cx++) {
+        for (let cz = pz - r; cz <= pz + r; cz++) {
+            for (let cy = 0; cy < 8; cy++) {
+                const chunkKey = `${cx},${cy},${cz}`;
+                let chunk = loadedChunks[chunkKey];
+                if (!chunk) { chunk = new Chunk(cx, cy, cz); chunk.generateData(); loadedChunks[chunkKey] = chunk; }
+                if (chunk.meshes.length === 0) chunk.buildMesh();
+                totalActiveMeshes += chunk.meshes.length;
+            }
+        }
+    }
+    document.getElementById('active-chunks-info').textContent = `Total Meshes: ${totalActiveMeshes}`;
+    document.getElementById('chunk-info').textContent = `Chunk: [${px}, ${pz}]`;
+}
+
+function getAllActiveMeshes() {
+    let list = [];
+    for (const key in loadedChunks) list = list.concat(loadedChunks[key].meshes);
+    return list;
+}
+
+function resizeImageToCanvas(src, size, callback) {
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, 0, 0, size, size);
+        callback(canvas.toDataURL('image/png'));
+    };
+    img.src = src;
+}
+
+function createProceduralTexture(type, side = 'side') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 16; canvas.height = 16;
+    const ctx = canvas.getContext('2d');
+
+    const colors = BLOCK_COLORS[type] || {base:'#000', noise:'#fff'};
+    ctx.fillStyle = colors.base;
+    ctx.fillRect(0, 0, 16, 16);
+
+    if(type === BLOCK_TYPES.GLASS) {
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(0,0,16,16);
+        ctx.strokeStyle = '#e0f0ff'; ctx.lineWidth = 2;
+        ctx.strokeRect(1,1,14,14);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(3,3,4,2); ctx.fillRect(10,10,2,2);
+    } else if(type === BLOCK_TYPES.BRICK) {
+        ctx.fillStyle = colors.base; ctx.fillRect(0,0,16,16);
+        ctx.fillStyle = colors.noise;
+        for(let y=0; y<16; y+=4) { ctx.fillRect(0, y+3, 16, 1); }
+        for(let y=0; y<16; y+=8) { ctx.fillRect(7, y, 1, 3); ctx.fillRect(15, y, 1, 3); ctx.fillRect(3, y+4, 1, 3); ctx.fillRect(11, y+4, 1, 3); }
+    } else if (type === BLOCK_TYPES.TORCH) {
+        ctx.fillStyle = "#5c4033"; ctx.fillRect(6, 6, 4, 10);
+        ctx.fillStyle = "#ffaa00"; ctx.fillRect(5, 2, 6, 4);
+        ctx.fillStyle = "#ff2200"; ctx.fillRect(7, 0, 2, 2);
+    } else {
+        const rand = mulberry32(type * 7);
+        for (let x = 0; x < 16; x++) {
+            for (let y = 0; y < 16; y++) {
+                if (rand() > (type===BLOCK_TYPES.SAND ? 0.8 : 0.65)) {
+                    ctx.fillStyle = colors.noise;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+        if (type === BLOCK_TYPES.GRASS) {
+            if (side === 'top') {
+                ctx.fillStyle = colors.top; ctx.fillRect(0, 0, 16, 16);
+                for (let x=0; x<16; x++) for (let y=0; y<16; y++) if (rand()>0.5) { ctx.fillStyle='#4c7429'; ctx.fillRect(x,y,1,1); }
+            } else if (side === 'side') {
+                ctx.fillStyle = colors.top; ctx.fillRect(0, 0, 16, 4);
+                for (let x=0; x<16; x++) { ctx.fillRect(x, 0, 1, Math.floor(rand()*3)+3); }
+            }
+        } else if (type === BLOCK_TYPES.WOOD && side === 'top') {
+            ctx.fillStyle = colors.top; ctx.fillRect(0, 0, 16, 16);
+            ctx.strokeStyle = colors.noise; ctx.lineWidth = 1;
+            ctx.strokeRect(2, 2, 12, 12); ctx.strokeRect(5, 5, 6, 6);
+        }
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    return texture;
+}
+
+const materialsCache = {};
+const customInstanceMatsCache = {};
+
+function createFaceTexture(colorHex, customImgData, faceKey) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 16; canvas.height = 16;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = colorHex || '#888888';
+    ctx.fillRect(0, 0, 16, 16);
+    
+    const rand = mulberry32(111 + faceKey.charCodeAt(0));
+    for (let x = 0; x < 16; x++) {
+        for (let y = 0; y < 16; y++) {
+            if (rand() > 0.75) {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+    }
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    return texture;
+}
+
+function getBlockMaterials(type) {
+    if (type >= BLOCK_TYPES.CUSTOM) {
+        if (customInstanceMatsCache[type]) return customInstanceMatsCache[type];
+        
+        const config = customBlocksRegistry[type];
+        if (!config) {
+            return materialsCache[BLOCK_TYPES.STONE] || getBlockMaterials(BLOCK_TYPES.STONE);
+        }
+        
+        const loadTex = (faceKey) => {
+            const faceObj = config.faces[faceKey];
+            if(!faceObj || !faceObj.texture) return createFaceTexture(faceObj.color, null, faceKey);
+            const img = new Image(); img.src = faceObj.texture;
+            const tex = new THREE.Texture(img);
+            tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+            img.onload = () => tex.needsUpdate = true;
+            return tex;
+        };
+        
+        const mats = [
+            new THREE.MeshLambertMaterial({map: loadTex('right')}), 
+            new THREE.MeshLambertMaterial({map: loadTex('left')}),  
+            new THREE.MeshLambertMaterial({map: loadTex('top')}),   
+            new THREE.MeshLambertMaterial({map: loadTex('bottom')}),
+            new THREE.MeshLambertMaterial({map: loadTex('front')}), 
+            new THREE.MeshLambertMaterial({map: loadTex('back')})   
+        ];
+        customInstanceMatsCache[type] = mats;
+        return mats;
+    }
+
+    if (materialsCache[type]) return materialsCache[type];
+
+    let mats = [];
+    if (type === BLOCK_TYPES.GRASS) {
+        const s=createProceduralTexture(type, 'side'), t=createProceduralTexture(type, 'top'), b=createProceduralTexture(BLOCK_TYPES.DIRT, 'side');
+        mats = [new THREE.MeshLambertMaterial({map:s}),new THREE.MeshLambertMaterial({map:s}),new THREE.MeshLambertMaterial({map:t}),new THREE.MeshLambertMaterial({map:b}),new THREE.MeshLambertMaterial({map:s}),new THREE.MeshLambertMaterial({map:s})];
+    } else if (type === BLOCK_TYPES.WOOD) {
+        const s=createProceduralTexture(type, 'side'), t=createProceduralTexture(type, 'top');
+        mats = [new THREE.MeshLambertMaterial({map:s}),new THREE.MeshLambertMaterial({map:s}),new THREE.MeshLambertMaterial({map:t}),new THREE.MeshLambertMaterial({map:t}),new THREE.MeshLambertMaterial({map:s}),new THREE.MeshLambertMaterial({map:s})];
+    } else if (type === BLOCK_TYPES.GLASS) {
+        const t=createProceduralTexture(type);
+        const m=new THREE.MeshLambertMaterial({map:t, transparent:true, opacity:0.8, side:THREE.DoubleSide});
+        mats=Array(6).fill(m);
+    } else if (type === BLOCK_TYPES.LEAVES) {
+        const t=createProceduralTexture(type);
+        const m=new THREE.MeshLambertMaterial({map:t, transparent:(shaderMode!=="lite"), opacity:0.9});
+        mats=Array(6).fill(m);
+    } else if (type === BLOCK_TYPES.TORCH) {
+        const t=createProceduralTexture(type);
+        const m=new THREE.MeshLambertMaterial({map:t, emissive: 0xffaa00, emissiveIntensity: 0.9});
+        mats=Array(6).fill(m);
+    } else {
+        const t=createProceduralTexture(type);
+        mats=Array(6).fill(new THREE.MeshLambertMaterial({map:t}));
+    }
+    materialsCache[type] = mats;
+    return mats;
+}
+
+function initEngine() {
+    const canvas = document.getElementById('game-canvas');
+    scene = new THREE.Scene();
+    const skyColor = selectedTerrainType==="desert" ? '#ffeebb' : '#a0c0ff';
+    scene.background = new THREE.Color(skyColor);
+
+    if (isFogEnabled) {
+        let fogDen = 0.03;
+        if(shaderMode==="lite") fogDen=0.015;
+        if(shaderMode==="max") fogDen=0.04;
+        scene.fog = new THREE.FogExp2(skyColor, fogDen);
+    } else {
+        scene.fog = null;
+    }
+
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, preserveDrawingBuffer: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = (shaderMode === "max");
+    if(shaderMode==="max") renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    sunLight = new THREE.DirectionalLight(0xfff5e6, 1.0);
+    sunLight.position.set(50, 120, 30);
+    if(shaderMode === "max") {
+        sunLight.castShadow = true;
+        sunLight.shadow.camera.left = -50; sunLight.shadow.camera.right = 50;
+        sunLight.shadow.camera.top = 50; sunLight.shadow.camera.bottom = -50;
+        sunLight.shadow.mapSize.width = 2048; sunLight.shadow.mapSize.height = 2048;
+    }
+    scene.add(sunLight);
+
+    moonLight = new THREE.DirectionalLight(0x88bbff, 0.0);
+    if(shaderMode === "max") {
+        moonLight.castShadow = true;
+        moonLight.shadow.camera.left = -50; moonLight.shadow.camera.right = 50;
+        moonLight.shadow.camera.top = 50; moonLight.shadow.camera.bottom = -50;
+    }
+    scene.add(moonLight);
+
+    const sunGeo = new THREE.BoxGeometry(8, 8, 8);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xffffee });
+    sunMesh = new THREE.Mesh(sunGeo, sunMat);
+    scene.add(sunMesh);
+
+    const moonMeshGeo = new THREE.BoxGeometry(6, 6, 6);
+    const moonMeshMat = new THREE.MeshBasicMaterial({ color: 0xddddff });
+    moonMesh = new THREE.Mesh(moonMeshGeo, moonMeshMat);
+    scene.add(moonMesh);
+
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsCount = 600;
+    const starPositions = new Float32Array(starsCount * 3);
+    for(let i=0; i<starsCount*3; i+=3) {
+        const radius = 250;
+        const u = Math.random();
+        const v = Math.random();
+        const theta = u * 2.0 * Math.PI;
+        const phi = Math.acos(2.0 * v - 1.0);
+        starPositions[i] = radius * Math.sin(phi) * Math.cos(theta);
+        starPositions[i+1] = Math.abs(radius * Math.sin(phi) * Math.sin(theta)); 
+        starPositions[i+2] = radius * Math.cos(phi);
+    }
+    starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starsMaterial = new THREE.PointsMaterial({color: 0xffffff, size: 1.0, sizeAttenuation: false, transparent: true, opacity: 0.0});
+    starsGroup = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(starsGroup);
+
+    cloudsGroup = new THREE.Group();
+    const cloudGeo = new THREE.BoxGeometry(24, 2, 24);
+    const cloudMat = new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.8});
+    for(let i=0; i<35; i++) {
+        const m = new THREE.Mesh(cloudGeo, cloudMat);
+        m.position.set((Math.random()-0.5)*350, 85 + Math.random()*15, (Math.random()-0.5)*350);
+        cloudsGroup.add(m);
+    }
+    scene.add(cloudsGroup);
+
+    const weatherCount = 600;
+    const weatherGeo = new THREE.BufferGeometry();
+    const weatherPos = new Float32Array(weatherCount * 3);
+    for(let i=0; i<weatherCount*3; i+=3) {
+        weatherPos[i] = (Math.random()-0.5)*80;
+        weatherPos[i+1] = Math.random()*40 + 20;
+        weatherPos[i+2] = (Math.random()-0.5)*80;
+    }
+    weatherGeo.setAttribute('position', new THREE.BufferAttribute(weatherPos, 3));
+    const weatherMat = new THREE.PointsMaterial({color: 0x88ccff, size: 0.4, transparent: true, opacity: 0.0});
+    weatherParticles = new THREE.Points(weatherGeo, weatherMat);
+    scene.add(weatherParticles);
+
+    const wireGeo = new THREE.BoxGeometry(1.01, 1.01, 1.01);
+    const wireMat = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true, transparent: true, opacity: 0.3 });
+    hoverBox = new THREE.Mesh(wireGeo, wireMat);
+    hoverBox.visible = false;
+    scene.add(hoverBox);
+
+    const pGeo = new THREE.BoxGeometry(0.6, player.height, 0.6);
+    const pMat = new THREE.MeshLambertMaterial({ color: 0x2244ff });
+    playerMesh = new THREE.Mesh(pGeo, pMat);
+    playerMesh.visible = false;
+    scene.add(playerMesh);
+
+    window.addEventListener('resize', onWindowResize, false);
+}
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function generateWorldDataAsyncJavaLoader() {
+    return new Promise((resolve) => {
+        loadedChunks = {}; 
+        initPermutation();
+        const r = selectedRenderDistance;
+        const totalChunks = (r * 2 + 1) * (r * 2 + 1) * 8;
+        let processed = 0;
+        
+        const loaderScreen = document.getElementById('java-loading-screen');
+        const loaderCircle = document.getElementById('java-loading-circle');
+        const loaderPercent = document.getElementById('java-loading-percent');
+        const loaderPhase = document.getElementById('java-loading-phase');
+        
+        loaderScreen.classList.remove('hidden');
+        
+        let cx = -r, cz = -r, cy = 0;
+
+        function processNextChunk() {
+            const chunkKey = `${cx},${cy},${cz}`;
+            const chunk = new Chunk(cx, cy, cz);
+            chunk.generateData();
+            loadedChunks[chunkKey] = chunk;
+
+            processed++;
+            const percent = Math.floor((processed / totalChunks) * 100);
+            
+            if (loaderPercent) loaderPercent.textContent = percent + '%';
+            if (loaderCircle) {
+                const dashOffset = 552.9 - (552.9 * percent) / 100;
+                loaderCircle.style.strokeDashoffset = dashOffset;
+            }
+            if (loaderPhase) {
+                if (percent < 30) {
+                    loaderPhase.textContent = "ĐANG KHỞI TẠO HẠT GIỐNG...";
+                } else if (percent < 70) {
+                    loaderPhase.textContent = "ĐANG XÂY DỰNG ĐỊA HÌNH CHUNKS...";
+                } else if (percent < 95) {
+                    loaderPhase.textContent = "ĐANG TRỒNG CÂY & THIẾT LẬP...";
+                } else {
+                    loaderPhase.textContent = "ĐANG HOÀN THIỆN THẾ GIỚI...";
+                }
+            }
+
+            cy++;
+            if (cy >= 8) {
+                cy = 0; cz++;
+                if (cz > r) { cz = -r; cx++; }
+            }
+
+            if (cx <= r) {
+                setTimeout(processNextChunk, 2); 
+            } else {
+                applyPendingTrees();
+                for (const key in loadedChunks) loadedChunks[key].buildMesh();
+                
+                setTimeout(() => {
+                    loaderScreen.classList.add('hidden');
+                    resolve();
+                }, 500);
+            }
+        }
+        processNextChunk();
+    });
+}
+
+function updatePhysics(deltaTime) {
+    const dt = Math.min(deltaTime, 0.1);
+    let moveX = 0, moveZ = 0;
+
+    if (keys.w) moveZ -= 1;
+    if (keys.s) moveZ += 1;
+    if (keys.a) moveX -= 1;
+    if (keys.d) moveX += 1;
+    if (joystickActive) { moveX = joystickMove.x; moveZ = joystickMove.y; }
+
+    let inputDir = new THREE.Vector3(moveX, 0, moveZ);
+    if (inputDir.lengthSq() > 1) inputDir.normalize();
+    const yaw = player.rotation.y;
+    const dirX = inputDir.x * Math.cos(yaw) + inputDir.z * Math.sin(yaw);
+    const dirZ = -inputDir.x * Math.sin(yaw) + inputDir.z * Math.cos(yaw);
+
+    let currentSpeed = player.speed;
+    if (player.isSprinting) {
+        currentSpeed *= player.sprintMultiplier;
+    } else if (player.isSneaking) {
+        currentSpeed *= player.sneakMultiplier;
+    }
+
+    if (isFlyEnabled) {
+        player.velocity.set(0, 0, 0);
+        player.position.x += dirX * player.flySpeed * dt;
+        player.position.z += dirZ * player.flySpeed * dt;
+
+        if (keys.space || keys.flyUp) {
+            player.position.y += player.flySpeed * dt;
+        } else if (keys.flyDown) {
+            player.position.y -= player.flySpeed * dt;
+        }
+        
+        player.position.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.position.x));
+        player.position.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.position.z));
+    } else {
+        player.velocity.y -= 19.8 * dt; 
+        if (player.velocity.y < -35) player.velocity.y = -35; 
+        
+        player.velocity.x = dirX * currentSpeed;
+        player.velocity.z = dirZ * currentSpeed;
+
+        if (keys.space && player.isGrounded) {
+            player.velocity.y = player.jumpForce;
+            player.isGrounded = false;
+            playStepSound();
+        }
+
+        const nextPos = player.position.clone().addScaledVector(player.velocity, dt);
+
+        nextPos.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, nextPos.x));
+        nextPos.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, nextPos.z));
+
+        player.position.y = nextPos.y;
+        checkCollisionsY();
+        player.position.x = nextPos.x;
+        checkCollisionsX();
+        player.position.z = nextPos.z;
+        checkCollisionsZ();
+
+        if(player.isGrounded && (Math.abs(player.velocity.x)>0.5 || Math.abs(player.velocity.z)>0.5)) {
+            if(Math.random()<0.06) playStepSound();
+        }
+    }
+
+    if (player.position.y < -5) {
+        player.position.set(0, 45, 0);
+        player.velocity.set(0, 0, 0);
+    }
+}
+
+function checkCollisionsY() {
+    const h = player.height, r = player.radius;
+    const startX = Math.floor(player.position.x - r), endX = Math.floor(player.position.x + r);
+    const startZ = Math.floor(player.position.z - r), endZ = Math.floor(player.position.z + r);
+    const footY = player.position.y - h;
+    const headY = player.position.y;
+
+    if (player.velocity.y <= 0) {
+        const checkY = Math.floor(footY);
+        for (let x = startX; x <= endX; x++) {
+            for (let z = startZ; z <= endZ; z++) {
+                if (getGlobalBlockAt(x, checkY, z) !== BLOCK_TYPES.AIR) {
+                    player.position.y = checkY + 1 + h;
+                    player.velocity.y = 0; 
+                    player.isGrounded = true; 
+                    return;
+                }
+            }
+        }
+        player.isGrounded = false;
+    } else {
+        const checkY = Math.floor(headY);
+        for (let x = startX; x <= endX; x++) {
+            for (let z = startZ; z <= endZ; z++) {
+                if (getGlobalBlockAt(x, checkY, z) !== BLOCK_TYPES.AIR) {
+                    player.position.y = checkY - 0.05; 
+                    player.velocity.y = 0; 
+                    return;
+                }
+            }
+        }
+    }
+}
+
+function checkCollisionsX() {
+    const h = player.height, r = player.radius;
+    const startY = Math.floor(player.position.y - h + 0.1), endY = Math.floor(player.position.y);
+    const startZ = Math.floor(player.position.z - r), endZ = Math.floor(player.position.z + r);
+    if (player.velocity.x > 0) {
+        const checkX = Math.floor(player.position.x + r);
+        for (let y = startY; y <= endY; y++) {
+            for (let z = startZ; z <= endZ; z++) {
+                if (getGlobalBlockAt(checkX, y, z) !== BLOCK_TYPES.AIR) {
+                    player.position.x = checkX - r - 0.01; 
+                    player.velocity.x = 0; 
+                    return;
+                }
+            }
+        }
+    } else if (player.velocity.x < 0) {
+        const checkX = Math.floor(player.position.x - r);
+        for (let y = startY; y <= endY; y++) {
+            for (let z = startZ; z <= endZ; z++) {
+                if (getGlobalBlockAt(checkX, y, z) !== BLOCK_TYPES.AIR) {
+                    player.position.x = checkX + 1 + r + 0.01; 
+                    player.velocity.x = 0; 
+                    return;
+                }
+            }
+        }
+    }
+}
+
+function checkCollisionsZ() {
+    const h = player.height, r = player.radius;
+    const startX = Math.floor(player.position.x - r), endX = Math.floor(player.position.x + r);
+    const startY = Math.floor(player.position.y - h + 0.1), endY = Math.floor(player.position.y);
+    if (player.velocity.z > 0) {
+        const checkZ = Math.floor(player.position.z + r);
+        for (let x = startX; x <= endX; x++) {
+            for (let y = startY; y <= endY; y++) {
+                if (getGlobalBlockAt(x, y, checkZ) !== BLOCK_TYPES.AIR) {
+                    player.position.z = checkZ - r - 0.01; 
+                    player.velocity.z = 0; 
+                    return;
+                }
+            }
+        }
+    } else if (player.velocity.z < 0) {
+        const checkZ = Math.floor(player.position.z - r);
+        for (let x = startX; x <= endX; x++) {
+            for (let y = startY; y <= endY; y++) {
+                if (getGlobalBlockAt(x, y, checkZ) !== BLOCK_TYPES.AIR) {
+                    player.position.z = checkZ + 1 + r + 0.01; 
+                    player.velocity.z = 0; 
+                    return;
+                }
+            }
+        }
+    }
+}
+
+function updateRaycasting() {
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    const activeMeshes = getAllActiveMeshes();
+    const intersects = raycaster.intersectObjects(activeMeshes);
+    if (intersects.length > 0 && intersects[0].distance < 7) {
+        const intersect = intersects[0];
+        hoverBox.position.copy(intersect.object.position);
+        if (intersect.object.userData.type === BLOCK_TYPES.TORCH) {
+            hoverBox.position.y -= 0.15;
+        }
+        hoverBox.visible = true;
+        return intersect;
+    } else { hoverBox.visible = false; return null; }
+}
+
+function showItemNamePopup(name) {
+    const pop = document.getElementById('item-name-popup');
+    if (!pop) return;
+    pop.textContent = name;
+    pop.style.opacity = "1";
+    
+    if (window.itemPopupTimeout) clearTimeout(window.itemPopupTimeout);
+    window.itemPopupTimeout = setTimeout(() => {
+        pop.style.opacity = "0";
+    }, 2000);
+}
+
+function getBlockName(type) {
+    if (BLOCK_NAMES[type]) return BLOCK_NAMES[type];
+    if (type >= BLOCK_TYPES.CUSTOM) {
+        const conf = customBlocksRegistry[type];
+        return conf ? conf.name : "Khối tùy chỉnh";
+    }
+    return "Khối không tên";
+}
+
+function performBlockAction(action) {
+    const intersect = updateRaycasting();
+    if (!intersect) return;
+    const blockMesh = intersect.object;
+    const globalCoords = blockMesh.userData.globalCoords;
+    const chunkCoords = blockMesh.userData.chunkCoords;
+
+    if (action === 'break') {
+        if (blockMesh.userData.type === BLOCK_TYPES.BEDROCK) return;
+        setGlobalBlockAt(globalCoords.x, globalCoords.y, globalCoords.z, BLOCK_TYPES.AIR);
+        rebuildChunkAndNeighbors(chunkCoords.cx, chunkCoords.cy, chunkCoords.cz);
+        playBreakSound();
+    } else if (action === 'place') {
+        const normal = intersect.face.normal;
+        const tx = globalCoords.x + normal.x, ty = globalCoords.y + normal.y, tz = globalCoords.z + normal.z;
+        const px = Math.floor(player.position.x), py = Math.floor(player.position.y), pz = Math.floor(player.position.z);
+        const pfootY = Math.floor(player.position.y - player.height + 0.1);
+
+        if (tx===px && tz===pz && (ty===py || ty===pfootY)) return; 
+        if (ty >= 0 && ty < 64) {
+            const type = blockSequence[activeBlockIndex];
+            
+            if (type === BLOCK_TYPES.STRUCTURE) {
+                document.getElementById('struct-status-msg').textContent = `Tọa độ gốc: [${tx}, ${ty}, ${tz}]`;
+                document.getElementById('struct-status-msg').setAttribute('data-tx', tx);
+                document.getElementById('struct-status-msg').setAttribute('data-ty', ty);
+                document.getElementById('struct-status-msg').setAttribute('data-tz', tz);
+                document.getElementById('structure-modal').classList.remove('hidden');
+                document.exitPointerLock();
+                return;
+            }
+            
+            setGlobalBlockAt(tx, ty, tz, type);
+            const tcx = Math.floor(tx/CHUNK_SIZE), tcy = Math.floor(ty/CHUNK_SIZE), tcz = Math.floor(tz/CHUNK_SIZE);
+            rebuildChunkAndNeighbors(tcx, tcy, tcz);
+            playPlaceSound();
+        }
+    }
+}
+
+function rebuildChunkAndNeighbors(cx, cy, cz) {
+    const offsets = [[0,0,0], [1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]];
+    for (const [ox, oy, oz] of offsets) {
+        const chunk = loadedChunks[`${cx+ox},${cy+oy},${cz+oz}`];
+        if (chunk) chunk.buildMesh();
+    }
+}
+
+function updateWeatherCycle(deltaTime) {
+    if (!isWeatherEnabled || !worldWeatherCycle) {
+        weatherType = "clear";
+        weatherMatOpacity(0);
+        return;
+    }
+
+    weatherTicks += deltaTime;
+    if (weatherTicks > 2400) {
+        weatherTicks = 0;
+        transitionProgress = 0.0;
+        
+        const types = ["clear", "rain", "storm", "fog", "snow", "windy", "cloudy"];
+        let newType = weatherType;
+        while (newType === weatherType) {
+            newType = types[Math.floor(Math.random() * types.length)];
+        }
+        weatherType = newType;
+    }
+
+    if (transitionProgress < 1.0) {
+        transitionProgress += deltaTime * 0.1; 
+    }
+
+    if (weatherType !== "clear" && weatherType !== "fog" && weatherType !== "windy" && weatherType !== "cloudy") {
+        weatherMatOpacity(0.8);
+        const posAttr = weatherParticles.geometry.attributes.position;
+        const arr = posAttr.array;
+        
+        let velocityMultiplier = 1.0;
+        if (weatherType === "storm") velocityMultiplier = 1.6;
+        
+        for(let i=1; i<arr.length; i+=3) {
+            if(weatherType === "snow") {
+                arr[i] -= 3.5 * deltaTime; 
+                arr[i-1] += Math.sin(performance.now()*0.0015 + i)*0.03; 
+            } else {
+                arr[i] -= 22 * velocityMultiplier * deltaTime; 
+            }
+            
+            if (arr[i] < -5) {
+                arr[i] = 40 + Math.random()*20;
+                arr[i-1] = (Math.random()-0.5)*80;
+            }
+        }
+        posAttr.needsUpdate = true;
+        weatherParticles.position.set(player.position.x, 0, player.position.z);
+
+        if(weatherType === "snow") {
+            weatherParticles.material.color.setHex(0xffffff);
+        } else {
+            weatherParticles.material.color.setHex(0x5070aa);
+        }
+    } else {
+        weatherMatOpacity(0);
+    }
+
+    if (weatherType === "storm" && Math.random() < 0.003) {
+        lightningFlashIntensity = 1.0;
+        if(Math.random() < 0.3) createBeep(90, 'sawtooth', 0.9, 0.5);
+    }
+
+    if (lightningFlashIntensity > 0) {
+        lightningFlashIntensity -= deltaTime * 2.5;
+    }
+}
+
+function weatherMatOpacity(targetOpacity) {
+    if(weatherParticles) {
+        weatherParticles.material.opacity = THREE.MathUtils.lerp(weatherParticles.material.opacity, targetOpacity, 0.05);
+    }
+}
+
+function updateCelestialCycle() {
+    if (worldAlwaysDay) {
+        gameTicks = 6000; 
+    } else {
+        gameTicks = (gameTicks + ticksPerSecond * 0.03) % 24000;
+    }
+
+    const progress = gameTicks / 24000;
+    const angle = progress * Math.PI * 2;
+    const distance = 120;
+
+    const sx = Math.cos(angle) * distance;
+    const sy = Math.sin(angle) * distance;
+    const sz = Math.sin(angle * 0.2) * 20;
+
+    sunMesh.position.set(player.position.x + sx, player.position.y + sy, player.position.z + sz);
+    sunLight.position.copy(sunMesh.position);
+
+    const mx = Math.cos(angle + Math.PI) * distance;
+    const my = Math.sin(angle + Math.PI) * distance;
+    const mz = Math.sin((angle + Math.PI) * 0.2) * 20;
+
+    moonMesh.position.set(player.position.x + mx, player.position.y + my, player.position.z + mz);
+    moonLight.position.copy(moonMesh.position);
+
+    let skyColor = new THREE.Color('#03030f');
+    let evName = "Bình Minh";
+    let starsOpacity = 0.0;
+
+    if (gameTicks >= 0 && gameTicks < 6000) {
+        evName = "Bình Minh 🌅";
+        let progressDay = gameTicks / 6000;
+        let baseSky = new THREE.Color('#ff8833');
+        let targetSky = new THREE.Color(selectedTerrainType==="desert" ? '#ffeebb' : '#a0c0ff');
+        skyColor.lerpColors(baseSky, targetSky, progressDay);
+        ambientLight.color.setHex(0xffffff);
+        ambientLight.intensity = 0.4 + progressDay * 0.4;
+        sunLight.intensity = progressDay * 1.0;
+        moonLight.intensity = 0;
+        starsOpacity = (1.0 - progressDay) * 0.8;
+    } else if (gameTicks >= 6000 && gameTicks < 12000) {
+        evName = "Giữa Trưa ☀️";
+        let progressSunset = (gameTicks - 6000) / 6000;
+        let baseSky = new THREE.Color(selectedTerrainType==="desert" ? '#ffeebb' : '#a0c0ff');
+        let targetSky = new THREE.Color('#ff3300');
+        skyColor.lerpColors(baseSky, targetSky, progressSunset);
+        ambientLight.color.setHex(0xffffff);
+        ambientLight.intensity = 0.8 - progressSunset * 0.4;
+        sunLight.intensity = (1.0 - progressSunset) * 1.0;
+        moonLight.intensity = 0;
+        starsOpacity = 0.0;
+    } else if (gameTicks >= 12000 && gameTicks < 18000) {
+        evName = "Hoàng Hôn 🌇";
+        let progressNight = (gameTicks - 12000) / 6000;
+        let baseSky = new THREE.Color('#ff3300');
+        let targetSky = new THREE.Color('#02020a');
+        skyColor.lerpColors(baseSky, targetSky, progressNight);
+        ambientLight.color.setHex('#8888ff');
+        ambientLight.intensity = 0.4 - progressNight * 0.25;
+        sunLight.intensity = 0;
+        moonLight.intensity = progressNight * 0.45;
+        moonLight.color.setHex(0x88bbff);
+        starsOpacity = progressNight * 1.0;
+    } else {
+        evName = "Nửa Đêm 🌌";
+        let progressSunrise = (gameTicks - 18000) / 6000;
+        let baseSky = new THREE.Color('#02020a');
+        let targetSky = new THREE.Color('#ff8833');
+        skyColor.lerpColors(baseSky, targetSky, progressSunrise);
+        ambientLight.color.setHex(0xffffff);
+        ambientLight.intensity = 0.15 + progressSunrise * 0.25;
+        sunLight.intensity = 0;
+        moonLight.intensity = (1.0 - progressSunrise) * 0.45;
+        moonLight.color.setHex(0x88bbff);
+        starsOpacity = (1.0 - progressSunrise) * 1.0;
+    }
+
+    if (weatherType !== "clear") {
+        let weatherMult = 0.4;
+        if(weatherType === "storm") weatherMult = 0.2;
+        if(weatherType === "fog") weatherMult = 0.55;
+        if(weatherType === "cloudy") weatherMult = 0.65;
+        
+        skyColor.multiplyScalar(weatherMult);
+        ambientLight.intensity *= weatherMult;
+    }
+
+    if (lightningFlashIntensity > 0) {
+        skyColor.lerp(new THREE.Color('#ffffff'), lightningFlashIntensity);
+        ambientLight.intensity += lightningFlashIntensity * 1.6;
+    }
+
+    scene.background.copy(skyColor);
+    if (isFogEnabled && scene.fog) {
+        scene.fog.color.copy(skyColor);
+    }
+
+    if (starsGroup) {
+        starsGroup.visible = isStarsEnabled && starsOpacity > 0.05;
+        starsGroup.material.opacity = starsOpacity;
+    }
+
+    let totalMinutes = Math.floor((gameTicks / 24000) * 24 * 60) + (6 * 60); 
+    let currentHours = Math.floor((totalMinutes / 60) % 24);
+    let currentMinutes = Math.floor(totalMinutes % 60);
+    let formattedTime = `${String(currentHours).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
+
+    let weatherLabel = "☀️ QUANG ĐÃNG (BETA)";
+    if (weatherType === "rain") weatherLabel = "🌧️ MƯA (BETA)";
+    if (weatherType === "storm") weatherLabel = "⛈️ GIÔNG SÉT (BETA)";
+    if (weatherType === "fog") weatherLabel = "🌫️ SƯƠNG MÙ (BETA)";
+    if (weatherType === "snow") weatherLabel = "❄️ TUYẾT RƠI (BETA)";
+    if (weatherType === "windy") weatherLabel = "🍃 GIÓ THỔI (BETA)";
+    if (weatherType === "cloudy") weatherLabel = "☁️ NHIỀU MÂY (BETA)";
+
+    document.getElementById('celestial-hud-info').innerHTML = `Thời tiết: ${weatherLabel}<br>Trạng thái: ${evName}<br>Thời gian: ${formattedTime} (${Math.floor(gameTicks)} Ticks)`;
+}
+
+function drawIsometricBlock(ctx, type) {
+    ctx.clearRect(0, 0, 40, 40);
+    
+    let topColor = '#707070', sideLeftColor = '#505050', sideRightColor = '#404040';
+
+    if (type >= BLOCK_TYPES.CUSTOM) {
+        const conf = customBlocksRegistry[type];
+        if (conf) {
+            topColor = conf.faces.top.color;
+            sideLeftColor = conf.faces.left.color;
+            sideRightColor = conf.faces.right.color;
+        }
+    } else {
+        const colors = BLOCK_COLORS[type] || { base: '#707070', noise: '#505050' };
+        topColor = colors.top || colors.base;
+        sideLeftColor = colors.base;
+        sideRightColor = colors.noise;
+    }
+
+    if (type === BLOCK_TYPES.TORCH) {
+        ctx.fillStyle = "#5c4033"; ctx.fillRect(17, 10, 6, 22);
+        ctx.fillStyle = "#ffaa00"; ctx.fillRect(15, 2, 10, 8);
+        ctx.fillStyle = "#ff2200"; ctx.fillRect(17, 0, 6, 2);
+        return;
+    }
+
+    ctx.fillStyle = topColor;
+    ctx.beginPath();
+    ctx.moveTo(20, 2);
+    ctx.lineTo(38, 12);
+    ctx.lineTo(20, 22);
+    ctx.lineTo(2, 12);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = sideLeftColor;
+    ctx.beginPath();
+    ctx.moveTo(2, 12);
+    ctx.lineTo(20, 22);
+    ctx.lineTo(20, 38);
+    ctx.lineTo(2, 28);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = sideRightColor;
+    ctx.beginPath();
+    ctx.moveTo(20, 22);
+    ctx.lineTo(38, 12);
+    ctx.lineTo(38, 28);
+    ctx.lineTo(20, 38);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function drawHotbarPreviews() {
+    for(let i=0; i<MAX_HOTBAR_SLOTS; i++) {
+        const canvas = document.getElementById(`slot-${i}-preview`);
+        if (!canvas) continue;
+        const ctx = canvas.getContext('2d');
+        const type = blockSequence[i];
+        if (type !== undefined) drawIsometricBlock(ctx, type);
+    }
+}
+
+function selectHotbarSlot(index) {
+    playClickSound();
+    activeBlockIndex = index;
+    document.querySelectorAll('.hotbar-slot').forEach((slot, idx) => {
+        if (idx === index) { slot.classList.add('border-yellow-400'); slot.classList.remove('border-transparent'); } 
+        else { slot.classList.remove('border-yellow-400'); slot.classList.add('border-transparent'); }
+    });
+    
+    const blockType = blockSequence[index];
+    showItemNamePopup(getBlockName(blockType));
+}
+
+function populateInventory() {
+    const grid = document.getElementById('inventory-grid');
+    grid.innerHTML = '';
+    
+    Object.keys(BLOCK_TYPES).forEach(key => {
+        if (BLOCK_TYPES[key] === BLOCK_TYPES.AIR || BLOCK_TYPES[key] === BLOCK_TYPES.CUSTOM) return;
+        const type = BLOCK_TYPES[key];
+        addInventorySlotToGrid(grid, type);
+    });
+
+    for (let idStr in customBlocksRegistry) {
+        const typeId = parseInt(idStr);
+        addInventorySlotToGrid(grid, typeId);
+    }
+}
+
+function addInventorySlotToGrid(gridElement, typeId) {
+    const slot = document.createElement('div');
+    slot.className = "mc-inv-slot w-14 h-14 flex items-center justify-center cursor-pointer relative rounded-md border-4 border-stone-700 bg-stone-500 hover:bg-stone-400 shadow-md";
+    const cvs = document.createElement('canvas');
+    cvs.width = 40; cvs.height = 40;
+    slot.appendChild(cvs);
+    const ctx = cvs.getContext('2d');
+    drawIsometricBlock(ctx, typeId);
+    slot.addEventListener('click', () => {
+        playClickSound();
+        blockSequence[activeBlockIndex] = typeId;
+        drawHotbarPreviews();
+        saveGlobalSettings();
+        document.getElementById('inventory-menu').classList.add('hidden');
+        showItemNamePopup(getBlockName(typeId));
+    });
+    gridElement.appendChild(slot);
+}
+
+function toggleFlightMode() {
+    isFlyEnabled = !isFlyEnabled;
+    playClickSound();
+    
+    if (!isFlyEnabled) {
+        player.velocity.set(0, 0, 0);
+    }
+    
+    applyHudSettings();
+    saveGlobalSettings();
+}
+
+function handleJumpTrigger() {
+    const now = performance.now();
+    const gap = now - lastJumpPressTime;
+    
+    if (gap < 300) {
+        toggleFlightMode();
+    } else {
+        if (!isFlyEnabled && player.isGrounded) {
+            player.velocity.y = player.jumpForce;
+            player.isGrounded = false;
+            playStepSound();
+        }
+    }
+    lastJumpPressTime = now;
+}
+
+function cycleCameraView() {
+    playClickSound();
+    cameraViewMode = (cameraViewMode + 1) % 3;
+    playerMesh.visible = (cameraViewMode !== 0);
+    document.getElementById('crosshair').style.display = (cameraViewMode === 0) ? 'block' : 'none';
+}
+
+function triggerScreenshot() {
+    playClickSound();
+    renderer.render(scene, camera);
+    const dataURL = renderer.domElement.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = `MC3D_Shot_${Date.now()}.png`;
+    link.href = dataURL; link.click();
+}
+
+function toggleScreenRecording() {
+    playClickSound();
+    const btn = document.getElementById('btn-record');
+    if (!isRecording) {
+        recordedChunks = [];
+        const stream = renderer.domElement.captureStream(30);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob); link.download = `MC3D_Vid_${Date.now()}.webm`; link.click();
+        };
+        mediaRecorder.start(); isRecording = true;
+        btn.textContent = "ĐANG GHI..."; btn.classList.replace('text-red-400', 'text-red-500'); btn.classList.add('animate-pulse');
+    } else {
+        mediaRecorder.stop(); isRecording = false;
+        btn.textContent = "QUAY PHIM (R)"; btn.classList.replace('text-red-500', 'text-red-400'); btn.classList.remove('animate-pulse');
+    }
+}
+
+function applyHudSettings() {
+    const hud = document.getElementById('hud-layer');
+    const cross = document.getElementById('crosshair');
+    const dInfo = document.getElementById('debug-info');
+    hud.style.opacity = isHudVisible ? "1" : "0";
+    cross.style.opacity = isHudVisible ? "1" : "0";
+    hud.style.transform = `scale(${hudScale})`;
+    dInfo.style.display = (isDebugVisible && isHudVisible) ? "block" : "none";
+    document.getElementById('fly-hud-info').style.display = isFlyEnabled ? "block" : "none";
+
+    const joy = document.getElementById('mobile-control-left');
+    const btns = document.getElementById('mobile-control-buttons');
+    if (isMobileBtnsVisible && isHudVisible) {
+        joy.classList.add('mobile-control'); joy.classList.remove('hidden');
+        btns.classList.add('mobile-control'); btns.classList.remove('hidden');
+    } else {
+        joy.classList.remove('mobile-control'); joy.classList.add('hidden');
+        btns.classList.remove('mobile-control'); btns.classList.add('hidden');
+    }
+
+    const mobileFly = document.getElementById('mobile-fly-buttons');
+    if (isFlyEnabled) {
+        mobileFly.classList.remove('hidden');
+    } else {
+        mobileFly.classList.add('hidden');
+    }
+
+    if(cloudsGroup) cloudsGroup.visible = isCloudsEnabled;
+}
+
+function setupPCControls() {
+    const canvas = document.getElementById('game-canvas');
+    canvas.addEventListener('click', () => {
+        if (window.innerWidth > 768 && isGameRunning && document.getElementById('modal-instruction-overlay').classList.contains('hidden') && document.getElementById('inventory-menu').classList.contains('hidden') && document.getElementById('custom-block-menu').classList.contains('hidden') && document.getElementById('structure-modal').classList.contains('hidden')) {
+            canvas.requestPointerLock();
+        }
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (document.pointerLockElement === canvas && isGameRunning) {
+            const sens = controlSensitivity;
+            player.rotation.y -= e.movementX * 0.002 * sens;
+            player.rotation.x -= e.movementY * 0.002 * sens;
+            player.rotation.x = Math.max(-Math.PI/2.1, Math.min(Math.PI/2.1, player.rotation.x));
+        }
+    });
+    window.addEventListener('keydown', (e) => {
+        if (!isGameRunning) return;
+        switch(e.code) {
+            case 'KeyW': case 'ArrowUp': keys.w = true; break;
+            case 'KeyA': case 'ArrowLeft': keys.a = true; break;
+            case 'KeyS': case 'ArrowDown': keys.s = true; break;
+            case 'KeyD': case 'ArrowRight': keys.d = true; break;
+            case 'F1':
+                e.preventDefault();
+                isHudVisible = !isHudVisible;
+                applyHudSettings();
+                break;
+            case 'F3':
+                e.preventDefault();
+                isDebugVisible = !isDebugVisible;
+                applyHudSettings();
+                break;
+            case 'Space': 
+                e.preventDefault();
+                keys.space = true; 
+                handleJumpTrigger();
+                break;
+            case 'ControlLeft': player.isSprinting = true; break; 
+            case 'ShiftLeft': 
+                player.isSneaking = true; 
+                if(isFlyEnabled) keys.flyDown = true;
+                break; 
+            case 'Digit1': selectHotbarSlot(0); break;
+            case 'Digit2': selectHotbarSlot(1); break;
+            case 'Digit3': selectHotbarSlot(2); break;
+            case 'Digit4': selectHotbarSlot(3); break;
+            case 'Digit5': selectHotbarSlot(4); break;
+            case 'Digit6': selectHotbarSlot(5); break;
+            case 'Digit7': selectHotbarSlot(6); break;
+            case 'KeyE': 
+                const inv = document.getElementById('inventory-menu');
+                if(inv.classList.contains('hidden')) {
+                    populateInventory(); inv.classList.remove('hidden'); document.exitPointerLock();
+                } else {
+                    inv.classList.add('hidden');
+                }
+                break;
+            case 'F5': e.preventDefault(); cycleCameraView(); break;
+            case 'KeyP': triggerScreenshot(); break;
+            case 'KeyR': toggleScreenRecording(); break;
+            case 'KeyH': document.getElementById('modal-instruction-overlay').classList.remove('hidden'); document.exitPointerLock(); break;
+            case 'KeyK': saveWorldDatabase(); break;
+            case 'Escape': 
+                if(document.pointerLockElement !== canvas && document.getElementById('inventory-menu').classList.contains('hidden') && document.getElementById('custom-block-menu').classList.contains('hidden') && document.getElementById('structure-modal').classList.contains('hidden')) {
+                    isGameRunning = false;
+                    document.getElementById('main-menu').classList.remove('hidden');
+                } else {
+                    document.getElementById('inventory-menu').classList.add('hidden');
+                    document.getElementById('custom-block-menu').classList.add('hidden');
+                    document.getElementById('structure-modal').classList.add('hidden');
+                }
+                break;
+        }
+    });
+    window.addEventListener('keyup', (e) => {
+        switch(e.code) {
+            case 'KeyW': case 'ArrowUp': keys.w = false; break;
+            case 'KeyA': case 'ArrowLeft': keys.a = false; break;
+            case 'KeyS': case 'ArrowDown': keys.s = false; break;
+            case 'KeyD': case 'ArrowRight': keys.d = false; break;
+            case 'Space': keys.space = false; break;
+            case 'ControlLeft': player.isSprinting = false; break;
+            case 'ShiftLeft': 
+                player.isSneaking = false; 
+                keys.flyDown = false;
+                break;
+        }
+    });
+    window.addEventListener('mousedown', (e) => {
+        if (document.pointerLockElement !== canvas || !isGameRunning) return;
+        if (e.button === 0) performBlockAction('break');
+        else if (e.button === 2) performBlockAction('place');
+    });
+}
+
+function setupMobileControls() {
+    const joyC = document.getElementById('mobile-control-joystick');
+    const knob = document.getElementById('joystick-knob');
+    joyC.addEventListener('touchstart', (e) => {
+        joystickStart.x = e.touches[0].clientX; joystickStart.y = e.touches[0].clientY; joystickActive = true;
+    });
+    joyC.addEventListener('touchmove', (e) => {
+        if (!joystickActive) return;
+        let dx = e.touches[0].clientX - joystickStart.x, dy = e.touches[0].clientY - joystickStart.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist > joystickMaxDist) { dx = (dx/dist)*joystickMaxDist; dy = (dy/dist)*joystickMaxDist; }
+        joystickMove.x = dx / joystickMaxDist; joystickMove.y = dy / joystickMaxDist;
+        knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+    const resetJoy = () => { joystickActive = false; joystickMove.x = 0; joystickMove.y = 0; knob.style.transform = 'translate(0px,0px)'; };
+    joyC.addEventListener('touchend', resetJoy); joyC.addEventListener('touchcancel', resetJoy);
+
+    document.body.addEventListener('touchstart', (e) => {
+        if (!isGameRunning || e.target.closest('.mc-btn') || e.target.closest('.hotbar-slot') || e.target.closest('.mobile-control') || e.target.closest('#inventory-menu') || e.target.id === 'btn-inventory' || e.target.id === 'btn-toggle-hud-visibility' || e.target.closest('#btn-fullscreen-yt')) return;
+        for (let i=0; i<e.touches.length; i++) {
+            if (e.touches[i].clientX > window.innerWidth/2 && e.touches[i].clientY < window.innerHeight-120) {
+                isTouchingRight = true; touchStart.x = e.touches[i].clientX; touchStart.y = e.touches[i].clientY; break;
+            }
+        }
+    });
+    document.body.addEventListener('touchmove', (e) => {
+        if (!isTouchingRight || !isGameRunning) return;
+        for (let i=0; i<e.touches.length; i++) {
+            if (e.touches[i].clientX > window.innerWidth/2) {
+                const dx = e.touches[i].clientX - touchStart.x, dy = e.touches[i].clientY - touchStart.y;
+                const sens = controlSensitivity * 0.007;
+                player.rotation.y -= dx * sens; player.rotation.x -= dy * sens;
+                player.rotation.x = Math.max(-Math.PI/2.1, Math.min(Math.PI/2.1, player.rotation.x));
+                touchStart.x = e.touches[i].clientX; touchStart.y = e.touches[i].clientY; break;
+            }
+        }
+    });
+    const stopTouchR = () => { isTouchingRight = false; };
+    document.body.addEventListener('touchend', stopTouchR); document.body.addEventListener('touchcancel', stopTouchR);
+
+    document.getElementById('btn-mobile-jump').addEventListener('touchstart', (e)=>{
+        e.preventDefault(); 
+        keys.space=true;
+        handleJumpTrigger();
+    });
+    document.getElementById('btn-mobile-jump').addEventListener('touchend', ()=>{keys.space=false;});
+    document.getElementById('btn-mobile-break').addEventListener('touchstart', (e)=>{e.preventDefault(); performBlockAction('break');});
+    document.getElementById('btn-mobile-place').addEventListener('touchstart', (e)=>{e.preventDefault(); performBlockAction('place');});
+
+    document.getElementById('btn-mobile-fly-up').addEventListener('touchstart', (e)=>{e.preventDefault(); keys.flyUp=true;});
+    document.getElementById('btn-mobile-fly-up').addEventListener('touchend', ()=>{keys.flyUp=false;});
+    document.getElementById('btn-mobile-fly-down').addEventListener('touchstart', (e)=>{e.preventDefault(); keys.flyDown=true;});
+    document.getElementById('btn-mobile-fly-down').addEventListener('touchend', ()=>{keys.flyDown=false;});
+
+    const btnSprint = document.getElementById('btn-mobile-sprint');
+    btnSprint.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        player.isSprinting = !player.isSprinting;
+        if(player.isSprinting) {
+            player.isSneaking = false;
+            btnSprint.classList.replace('bg-orange-600/60', 'bg-orange-500/90');
+            document.getElementById('btn-mobile-sneak').classList.replace('bg-stone-500/90', 'bg-stone-600/60');
+        } else {
+            btnSprint.classList.replace('bg-orange-500/90', 'bg-orange-600/60');
+        }
+    });
+
+    const btnSneak = document.getElementById('btn-mobile-sneak');
+    btnSneak.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        player.isSneaking = !player.isSneaking;
+        if(player.isSneaking) {
+            player.isSprinting = false;
+            btnSneak.classList.replace('bg-stone-600/60', 'bg-stone-500/90');
+            document.getElementById('btn-mobile-sprint').classList.replace('bg-orange-500/90', 'bg-orange-600/60');
+        } else {
+            btnSneak.classList.replace('bg-stone-500/90', 'bg-stone-600/60');
+        }
+    });
+
+    document.getElementById('hotbar-slots-wrapper').addEventListener('pointerdown', (e) => {
+        const slot = e.target.closest('.hotbar-slot');
+        if (slot) { e.stopPropagation(); selectHotbarSlot(parseInt(slot.getAttribute('data-index'))); }
+    });
+
+    document.getElementById('btn-hotbar-prev').addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        let prev = activeBlockIndex - 1;
+        if(prev < 0) prev = MAX_HOTBAR_SLOTS - 1;
+        selectHotbarSlot(prev);
+    });
+
+    document.getElementById('btn-hotbar-next').addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        let next = (activeBlockIndex + 1) % MAX_HOTBAR_SLOTS;
+        selectHotbarSlot(next);
+    });
+}
+
+function renderWorldsMenu() {
+    const list = document.getElementById('worlds-menu-list');
+    list.innerHTML = '';
+    const worlds = getSavedWorldsList();
+
+    if(worlds.length === 0) {
+        list.innerHTML = `<div class="text-stone-400 text-center p-8 italic border-2 border-dashed border-stone-600">Không có thế giới nào được lưu trữ. Hãy khởi tạo một thế giới ngay thôi!</div>`;
+        return;
+    }
+
+    worlds.forEach(w => {
+        const div = document.createElement('div');
+        div.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-stone-800 border-2 border-stone-600 rounded gap-4 hover:border-yellow-500 transition-all duration-150 shadow-inner";
+        div.innerHTML = `
+            <div class="flex-1">
+                <div class="text-yellow-400 text-lg font-bold uppercase tracking-wider">${w.name}</div>
+                <div class="text-stone-300 text-xs mt-1 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
+                    <span>Hạt giống (Seed): <b class="text-green-400">${w.seed}</b></span>
+                    <span>Modifications: <b class="text-purple-400">${w.changesCount} Blocks</b></span>
+                    <span>Tạo lập: <b class="text-stone-400">${w.createdDate}</b></span>
+                    <span>Lần chơi cuối: <b class="text-orange-400">${w.lastPlayed}</b></span>
+                </div>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto shrink-0 flex-wrap">
+                <button class="mc-btn px-4 py-2 text-xs text-green-300 flex-1 sm:flex-initial" onclick="loadAndPlayWorld('${w.id}')">VÀO CHƠI</button>
+                <button class="mc-btn px-4 py-2 text-xs text-yellow-300 flex-1 sm:flex-initial" onclick="openWorldSettings('${w.id}')">Cài đặt thế giới</button>
+                <button class="mc-btn px-4 py-2 text-xs text-sky-300 flex-1 sm:flex-initial" onclick="cloneWorld('${w.id}')">NHÂN BẢN</button>
+                <button class="mc-btn px-4 py-2 text-xs text-blue-300 flex-1 sm:flex-initial" onclick="exportWorldToJson('${w.id}')">XUẤT FILE</button>
+                <button class="mc-btn px-4 py-2 text-xs text-red-400 flex-1 sm:flex-initial" onclick="deleteWorldAndRefresh('${w.id}')">XÓA</button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+window.openWorldSettings = function(worldId) {
+    playClickSound();
+    activeEditingWorldId = worldId;
+    const key = SAVE_PREFIX + worldId;
+    const dataStr = localStorage.getItem(key);
+    if(dataStr) {
+        try {
+            const data = unpackWorldData(dataStr);
+            document.getElementById('edit-world-name').value = data.name || "Không tên";
+            document.getElementById('edit-world-seed').value = data.seed || "";
+            document.getElementById('edit-render-distance').value = data.renderDistance !== undefined ? data.renderDistance : 4;
+            document.getElementById('edit-terrain-type').value = data.terrainType || "standard";
+            document.getElementById('edit-world-always-day').checked = data.alwaysDay || false;
+            document.getElementById('edit-world-weather').checked = data.weatherCycle !== undefined ? data.weatherCycle : true;
+            
+            document.getElementById('world-settings-modal').classList.remove('hidden');
+        } catch(e) { console.error(e); }
+    }
+}
+
+window.loadAndPlayWorld = async function(worldId) {
+    document.getElementById('saved-worlds-menu').classList.add('hidden');
+    playClickSound();
+    
+    const loaded = loadWorldDatabase(worldId);
+    if (!loaded) return;
+
+    initEngine();
+    document.getElementById('shader-hud-info').textContent = `Shader: ${shaderMode.toUpperCase()}`;
+    
+    await generateWorldDataAsyncJavaLoader();
+    
+    isGameRunning = true;
+    drawHotbarPreviews();
+    applyHudSettings();
+}
+
+window.deleteWorldAndRefresh = function(worldId) {
+    if (confirm("Xác nhận xóa hoàn toàn thế giới này vĩnh viễn?")) {
+        const key = SAVE_PREFIX + worldId;
+        localStorage.removeItem(key);
+        playClickSound();
+        renderWorldsMenu();
+    }
+}
+
+function initAppFlow() {
+    initHotbarDOM();
+    loadGlobalSettings();
+    applyHudSettings();
+
+    const splash = document.getElementById('splash-screen'), bar = document.getElementById('splash-bar');
+    let p = 0;
+    const iv = setInterval(() => {
+        p += Math.floor(Math.random() * 10) + 5;
+        if (p >= 100) { 
+            p = 100; 
+            clearInterval(iv); 
+            document.getElementById('splash-loading-text').textContent="XONG!";
+            setTimeout(() => { 
+                splash.classList.add('opacity-0'); 
+                setTimeout(() => { 
+                    splash.style.display = 'none'; 
+                    document.getElementById('main-menu').classList.remove('hidden'); 
+                }, 1000); 
+            }, 500);
+        }
+        bar.style.width = p + '%';
+    }, 100);
+
+    document.getElementById('btn-open-saved-worlds').addEventListener('click', () => {
+        playClickSound();
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('saved-worlds-menu').classList.remove('hidden');
+        renderWorldsMenu();
+    });
+
+    document.getElementById('btn-close-worlds-menu').addEventListener('click', () => {
+        playClickSound();
+        document.getElementById('saved-worlds-menu').classList.add('hidden');
+        document.getElementById('main-menu').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-close-world-settings').addEventListener('click', () => {
+        playClickSound();
+        document.getElementById('world-settings-modal').classList.add('hidden');
+    });
+
+    document.getElementById('btn-save-world-settings').addEventListener('click', () => {
+        playClickSound();
+        if(!activeEditingWorldId) return;
+        const key = SAVE_PREFIX + activeEditingWorldId;
+        const dataStr = localStorage.getItem(key);
+        if(dataStr) {
+            try {
+                const data = unpackWorldData(dataStr);
+                data.name = document.getElementById('edit-world-name').value.trim() || "Không tên";
+                data.renderDistance = parseInt(document.getElementById('edit-render-distance').value);
+                data.terrainType = document.getElementById('edit-terrain-type').value;
+                data.alwaysDay = document.getElementById('edit-world-always-day').checked;
+                data.weatherCycle = document.getElementById('edit-world-weather').checked;
+                
+                localStorage.setItem(key, packWorldData(data));
+                document.getElementById('world-settings-modal').classList.add('hidden');
+                renderWorldsMenu();
+            } catch(e) { console.error(e); }
+        }
+    });
+
+    document.getElementById('btn-open-create-world').addEventListener('click', () => { 
+        playClickSound(); 
+        document.getElementById('main-menu').classList.add('hidden'); 
+        document.getElementById('create-world-menu').classList.remove('hidden'); 
+    });
+    
+    document.getElementById('btn-cancel-create').addEventListener('click', () => { 
+        playClickSound(); 
+        document.getElementById('create-world-menu').classList.add('hidden'); 
+        document.getElementById('main-menu').classList.remove('hidden'); 
+    });
+
+    document.getElementById('btn-confirm-create').addEventListener('click', async () => {
+        playClickSound();
+        currentWorldId = generateUniqueId();
+        currentWorldName = document.getElementById('world-name').value.trim() || "Thế giới mới";
+        const s = document.getElementById('world-seed').value.trim();
+        currentSeed = s === "" ? Math.floor(Math.random() * 999999) : (parseInt(s) || Math.floor(Math.random() * 999999));
+        selectedRenderDistance = parseInt(document.getElementById('render-distance-select').value);
+        selectedTerrainType = document.getElementById('terrain-type-select').value;
+        worldAlwaysDay = document.getElementById('world-always-day').checked;
+        worldWeatherCycle = document.getElementById('world-weather-cycle').checked;
+        
+        worldChanges = {}; 
+        player.lastChunkCoords = {cx:999, cz:999};
+
+        document.getElementById('create-world-menu').classList.add('hidden');
+        initEngine();
+        document.getElementById('shader-hud-info').textContent = `Shader: ${shaderMode.toUpperCase()}`;
+        
+        await generateWorldDataAsyncJavaLoader();
+        
+        player.position.set(0, getNoiseHeight(0, 0) + 5, 0); 
+        player.velocity.set(0,0,0);
+        
+        isGameRunning = true;
+        saveWorldDatabase();
+        drawHotbarPreviews();
+        applyHudSettings();
+    });
+
+    document.getElementById('btn-open-settings').addEventListener('click', () => {
+        playClickSound();
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('settings-menu').classList.remove('hidden');
+        document.getElementById('shader-mode-select').value = shaderMode;
+        document.getElementById('sensitivity-range').value = controlSensitivity * 100;
+        document.getElementById('sensitivity-value').textContent = Math.floor(controlSensitivity * 100) + '%';
+        document.getElementById('settings-clouds').checked = isCloudsEnabled;
+        document.getElementById('settings-stars').checked = isStarsEnabled;
+        document.getElementById('settings-weather').checked = isWeatherEnabled;
+        document.getElementById('settings-fog').checked = isFogEnabled;
+        document.getElementById('settings-particles').checked = isParticlesEnabled;
+        document.getElementById('settings-fly').checked = isFlyEnabled;
+        document.getElementById('settings-sound').checked = isSoundEnabled;
+        document.getElementById('settings-show-hud').checked = isHudVisible;
+        document.getElementById('settings-show-mobile-btns').checked = isMobileBtnsVisible;
+        document.getElementById('hud-scale-range').value = hudScale * 100;
+        document.getElementById('hud-scale-value').textContent = Math.floor(hudScale * 100) + '%';
+        
+        let totalBytes = 0;
+        for(let i=0; i<localStorage.length; i++) {
+            totalBytes += localStorage.getItem(localStorage.key(i)).length * 2;
+        }
+        document.getElementById('storage-usage').textContent = (totalBytes / 1024).toFixed(1) + ' KB';
+        
+        const fullExpObj = {};
+        for(let i=0; i<localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k.startsWith('mc_3d_') || k.startsWith(SAVE_PREFIX)) {
+                fullExpObj[k] = localStorage.getItem(k);
+            }
+        }
+        document.getElementById('storage-json-area').value = JSON.stringify(fullExpObj, null, 2);
+    });
+
+    document.getElementById('btn-export-memory-json').addEventListener('click', () => {
+        playClickSound();
+        const fullExpObj = {};
+        for(let i=0; i<localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k.startsWith('mc_3d_') || k.startsWith(SAVE_PREFIX)) {
+                fullExpObj[k] = localStorage.getItem(k);
+            }
+        }
+        document.getElementById('storage-json-area').value = JSON.stringify(fullExpObj, null, 2);
+        showItemNamePopup("Đã xuất chuỗi JSON bộ nhớ!");
+    });
+
+    document.getElementById('btn-import-memory-json').addEventListener('click', () => {
+        playClickSound();
+        const txt = document.getElementById('storage-json-area').value.trim();
+        if(!txt) {
+            alert("Vui lòng nhập chuỗi JSON hợp lệ!");
+            return;
+        }
+        try {
+            const data = JSON.parse(txt);
+            if (confirm("Hành động này sẽ thay thế toàn bộ thế giới hiện tại bằng chuỗi JSON đã nhập. Bạn đồng ý?")) {
+                for(let k in data) {
+                    if (k.startsWith('mc_3d_') || k.startsWith(SAVE_PREFIX)) {
+                        localStorage.setItem(k, data[k]);
+                    }
+                }
+                alert("Đã đồng bộ bộ nhớ JSON thành công! Đang tải lại cấu trúc...");
+                window.location.reload();
+            }
+        } catch(err) {
+            alert("Lỗi phân tích cú pháp JSON! Vui lòng kiểm tra lại cấu trúc.");
+        }
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            playClickSound();
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+        });
+    });
+
+    document.getElementById('sensitivity-range').addEventListener('input', (e) => {
+        document.getElementById('sensitivity-value').textContent = e.target.value + '%';
+    });
+    document.getElementById('hud-scale-range').addEventListener('input', (e) => {
+        document.getElementById('hud-scale-value').textContent = e.target.value + '%';
+    });
+
+    document.getElementById('btn-cancel-settings').addEventListener('click', () => { 
+        playClickSound(); 
+        document.getElementById('settings-menu').classList.add('hidden'); 
+        document.getElementById('main-menu').classList.remove('hidden'); 
+    });
+
+    document.getElementById('btn-close-settings').addEventListener('click', () => {
+        playClickSound();
+        const sh = document.getElementById('shader-mode-select').value;
+        controlSensitivity = document.getElementById('sensitivity-range').value / 100;
+        isCloudsEnabled = document.getElementById('settings-clouds').checked;
+        isStarsEnabled = document.getElementById('settings-stars').checked;
+        isWeatherEnabled = document.getElementById('settings-weather').checked;
+        isFogEnabled = document.getElementById('settings-fog').checked;
+        isParticlesEnabled = document.getElementById('settings-particles').checked;
+        isFlyEnabled = document.getElementById('settings-fly').checked;
+        isSoundEnabled = document.getElementById('settings-sound').checked;
+        isHudVisible = document.getElementById('settings-show-hud').checked;
+        isMobileBtnsVisible = document.getElementById('settings-show-mobile-btns').checked;
+        hudScale = document.getElementById('hud-scale-range').value / 100;
+        saveGlobalSettings();
+        applyHudSettings();
+
+        if (sh !== shaderMode) {
+            pendingShaderMode = sh;
+            document.getElementById('confirm-shader-dialog').classList.remove('hidden');
+        } else {
+            document.getElementById('settings-menu').classList.add('hidden');
+            document.getElementById('main-menu').classList.remove('hidden');
+        }
+    });
+
+    document.getElementById('btn-cancel-shader').addEventListener('click', () => { playClickSound(); document.getElementById('confirm-shader-dialog').classList.add('hidden'); });
+    document.getElementById('btn-confirm-shader').addEventListener('click', async () => {
+        playClickSound();
+        document.getElementById('confirm-shader-dialog').classList.add('hidden');
+        document.getElementById('settings-menu').classList.add('hidden');
+        shaderMode = pendingShaderMode;
+        saveGlobalSettings();
+        if(isGameRunning) {
+            isGameRunning = false;
+            initEngine();
+            await generateWorldDataAsyncJavaLoader();
+            isGameRunning = true;
+        } else {
+            document.getElementById('main-menu').classList.remove('hidden');
+        }
+    });
+
+    document.getElementById('btn-clear-storage').addEventListener('click', () => { 
+        playClickSound(); 
+        if(confirm("Xóa sạch toàn bộ thế giới của bạn trên trình duyệt này?")) {
+            localStorage.clear();
+            window.location.reload();
+        } 
+    });
+
+    document.getElementById('btn-quit').addEventListener('click', () => { playClickSound(); window.location.reload(); });
+
+    document.getElementById('btn-back-menu').addEventListener('click', () => {
+        playClickSound(); 
+        isGameRunning = false; 
+        document.exitPointerLock();
+        saveWorldDatabase();
+        document.getElementById('main-menu').classList.remove('hidden');
+    });
+    
+    document.getElementById('btn-save-game').addEventListener('click', () => { playClickSound(); saveWorldDatabase(); });
+    document.getElementById('btn-change-view').addEventListener('click', cycleCameraView);
+    document.getElementById('btn-screenshot').addEventListener('click', triggerScreenshot);
+    document.getElementById('btn-record').addEventListener('click', toggleScreenRecording);
+
+    document.getElementById('btn-inventory').addEventListener('click', (e) => {
+        playClickSound();
+        e.stopPropagation();
+        populateInventory();
+        document.getElementById('inventory-menu').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-close-inv').addEventListener('click', () => {
+        playClickSound();
+        document.getElementById('inventory-menu').classList.add('hidden');
+    });
+
+    const modInst = document.getElementById('modal-instruction-overlay');
+    document.getElementById('btn-instruction').addEventListener('click', () => { playClickSound(); modInst.classList.remove('hidden'); document.exitPointerLock(); });
+    document.getElementById('btn-close-instruction').addEventListener('click', () => { playClickSound(); modInst.classList.add('hidden'); });
+    modInst.addEventListener('click', (e) => { if(e.target === modInst) modInst.classList.add('hidden'); });
+
+    const cbMenu = document.getElementById('custom-block-menu');
+    document.getElementById('btn-trigger-custom-builder').addEventListener('click', () => {
+        playClickSound();
+        document.getElementById('cb-name').value = "Khối tùy chỉnh " + (customBlockCounter + 1);
+        
+        ['top', 'bottom', 'front', 'back', 'left', 'right'].forEach(face => {
+            document.getElementById(`cb-${face}-color`).value = pendingCustomBlockConfig.faces[face].color;
+            const img = document.getElementById(`img-${face}`);
+            if (pendingCustomBlockConfig.faces[face].texture) {
+                img.src = pendingCustomBlockConfig.faces[face].texture;
+                img.style.display = 'block';
+            } else {
+                img.src = '';
+                img.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('inventory-menu').classList.add('hidden');
+        cbMenu.classList.remove('hidden');
+    });
+
+    document.getElementById('btn-cancel-custom-block').addEventListener('click', () => { 
+        playClickSound(); 
+        cbMenu.classList.add('hidden'); 
+        document.getElementById('inventory-menu').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-save-custom-block').addEventListener('click', () => {
+        playClickSound();
+        const blockName = document.getElementById('cb-name').value.trim() || "Khối tùy chỉnh";
+        
+        customBlockCounter++;
+        const nextTypeId = BLOCK_TYPES.CUSTOM + customBlockCounter;
+        
+        const newInstanceConfig = {
+            name: blockName,
+            faces: {
+                top: { color: document.getElementById('cb-top-color').value, texture: pendingCustomBlockConfig.faces.top.texture },
+                bottom: { color: document.getElementById('cb-bottom-color').value, texture: pendingCustomBlockConfig.faces.bottom.texture },
+                front: { color: document.getElementById('cb-front-color').value, texture: pendingCustomBlockConfig.faces.front.texture },
+                back: { color: document.getElementById('cb-back-color').value, texture: pendingCustomBlockConfig.faces.back.texture },
+                left: { color: document.getElementById('cb-left-color').value, texture: pendingCustomBlockConfig.faces.left.texture },
+                right: { color: document.getElementById('cb-right-color').value, texture: pendingCustomBlockConfig.faces.right.texture }
+            }
+        };
+
+        customBlocksRegistry[nextTypeId] = newInstanceConfig;
+        
+        saveGlobalSettings();
+        
+        blockSequence[activeBlockIndex] = nextTypeId;
+        
+        drawHotbarPreviews();
+        cbMenu.classList.add('hidden');
+        
+        populateInventory();
+        document.getElementById('inventory-menu').classList.remove('hidden');
+        showItemNamePopup(blockName);
+    });
+
+    document.getElementById('btn-delete-custom-block').addEventListener('click', () => {
+        playClickSound();
+        if(confirm("Khởi động lại cấu hình tạm thời của khối tùy chỉnh?")) {
+            pendingCustomBlockConfig = {
+                name: "Khối tùy chỉnh 1",
+                faces: {
+                    top: { color: "#55aa55", texture: null },
+                    bottom: { color: "#8a5c3c", texture: null },
+                    front: { color: "#aa5555", texture: null },
+                    back: { color: "#aa5555", texture: null },
+                    left: { color: "#5555aa", texture: null },
+                    right: { color: "#5555aa", texture: null }
+                }
+            };
+            
+            ['top', 'bottom', 'front', 'back', 'left', 'right'].forEach(face => {
+                const img = document.getElementById(`img-${face}`);
+                img.src = '';
+                img.style.display = 'none';
+                document.getElementById(`cb-${face}-color`).value = pendingCustomBlockConfig.faces[face].color;
+            });
+        }
+    });
+
+    document.getElementById('btn-clear-textures').addEventListener('click', () => {
+        playClickSound();
+        ['top', 'bottom', 'front', 'back', 'left', 'right'].forEach(face => {
+            pendingCustomBlockConfig.faces[face].texture = null;
+            const img = document.getElementById(`img-${face}`);
+            img.src = '';
+            img.style.display = 'none';
+        });
+    });
+
+    ['top', 'bottom', 'front', 'back', 'left', 'right'].forEach(face => {
+        document.getElementById('file-'+face).addEventListener('change', (e) => {
+            const f = e.target.files[0];
+            if(f) {
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    resizeImageToCanvas(ev.target.result, 64, (dataUrl) => {
+                        pendingCustomBlockConfig.faces[face].texture = dataUrl;
+                        const img = document.getElementById('img-'+face);
+                        img.src = dataUrl; img.style.display = 'block';
+                    });
+                };
+                r.readAsDataURL(f);
+            }
+        });
+    });
+
+    let isHudPausedHidden = false;
+    document.getElementById('btn-toggle-hud-visibility').addEventListener('click', (e) => {
+        e.stopPropagation();
+        playClickSound();
+        isHudPausedHidden = !isHudPausedHidden;
+        const debug = document.getElementById('debug-info');
+        const nav = document.getElementById('hud-nav-buttons');
+        const btnView = document.getElementById('btn-change-view');
+        const btnScreen = document.getElementById('btn-screenshot');
+        const btnRec = document.getElementById('btn-record');
+
+        if (isHudPausedHidden) {
+            if(debug) debug.style.opacity = "0";
+            if(nav) nav.style.opacity = "0";
+            if(btnView) btnView.style.opacity = "0";
+            if(btnScreen) btnScreen.style.opacity = "0";
+            if(btnRec) btnRec.style.opacity = "0";
+        } else {
+            if(debug) debug.style.opacity = "1";
+            if(nav) nav.style.opacity = "1";
+            if(btnView) btnView.style.opacity = "1";
+            if(btnScreen) btnScreen.style.opacity = "1";
+            if(btnRec) btnRec.style.opacity = "1";
+        }
+    });
+    
+    document.getElementById('btn-close-structure-modal').addEventListener('click', () => {
+        playClickSound();
+        document.getElementById('structure-modal').classList.add('add', 'hidden');
+    });
+    
+    document.getElementById('btn-struct-copy').addEventListener('click', () => {
+        playClickSound();
+        const modal = document.getElementById('struct-status-msg');
+        const tx = parseInt(modal.getAttribute('data-tx'));
+        const ty = parseInt(modal.getAttribute('data-ty'));
+        const tz = parseInt(modal.getAttribute('data-tz'));
+        
+        const sizeX = parseInt(document.getElementById('struct-size-x').value) || 3;
+        const sizeY = parseInt(document.getElementById('struct-size-y').value) || 3;
+        const sizeZ = parseInt(document.getElementById('struct-size-z').value) || 3;
+        
+        const blocksList = [];
+        for (let dx = 0; dx < sizeX; dx++) {
+            for (let dy = 0; dy < sizeY; dy++) {
+                for (let dz = 0; dz < sizeZ; dz++) {
+                    const blockType = getGlobalBlockAt(tx + dx, ty + dy, tz + dz);
+                    blocksList.push({ dx, dy, dz, type: blockType });
+                }
+            }
+        }
+        
+        clipboardStructure = {
+            sizeX, sizeY, sizeZ,
+            blocks: blocksList
+        };
+        
+        document.getElementById('struct-status-msg').textContent = `Đã sao chép vùng ${sizeX}x${sizeY}x${sizeZ} thành công!`;
+    });
+    
+    document.getElementById('btn-struct-paste').addEventListener('click', () => {
+        playClickSound();
+        if (!clipboardStructure) {
+            document.getElementById('struct-status-msg').textContent = `Lỗi: Không có cấu trúc nào được lưu!`;
+            return;
+        }
+        
+        const modal = document.getElementById('struct-status-msg');
+        const tx = parseInt(modal.getAttribute('data-tx'));
+        const ty = parseInt(modal.getAttribute('data-ty'));
+        const tz = parseInt(modal.getAttribute('data-tz'));
+        
+        clipboardStructure.blocks.forEach(b => {
+            const rx = tx + b.dx;
+            const ry = ty + b.dy;
+            const rz = tz + b.dz;
+            if (ry >= 0 && ry < 64) {
+                setGlobalBlockAt(rx, ry, rz, b.type);
+            }
+        });
+        
+        const cx = Math.floor(tx/CHUNK_SIZE), cy = Math.floor(ty/CHUNK_SIZE), cz = Math.floor(tz/CHUNK_SIZE);
+        rebuildChunkAndNeighbors(cx, cy, cz);
+        
+        document.getElementById('struct-status-msg').textContent = "Đã dán vùng cấu trúc thành công!";
+    });
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    const now = performance.now();
+    fpsCounter++;
+    const delta = (now - lastTime) / 1000;
+    lastTime = now;
+    fpsTimer += delta;
+    if (fpsTimer >= 1.0) {
+        document.getElementById('fps-counter').textContent = `FPS: ${fpsCounter}`;
+        fpsCounter = 0; fpsTimer = 0;
+    }
+    if (isGameRunning) {
+        updatePhysics(delta);
+        updateCelestialCycle();
+        updateWeatherCycle(delta);
+
+        if (isCloudsEnabled && cloudsGroup) {
+            cloudsGroup.children.forEach(c => {
+                c.position.x += 0.05;
+                if (c.position.x - player.position.x > 175) c.position.x -= 350;
+                else if (c.position.x - player.position.x < -175) c.position.x += 350;
+                if (c.position.z - player.position.z > 175) c.position.z -= 350;
+                else if (c.position.z - player.position.z < -175) c.position.z += 350;
+            });
+        }
+
+        playerMesh.position.copy(player.position);
+        playerMesh.position.y -= (player.height / 2);
+        playerMesh.rotation.y = player.rotation.y;
+
+        if (cameraViewMode === 0) {
+            camera.position.copy(player.position);
+            camera.position.y += 0.62;
+            const t = new THREE.Vector3(0,0,-1); t.applyEuler(player.rotation); t.add(camera.position);
+            camera.lookAt(t);
+        } else if (cameraViewMode === 1) {
+            const off = new THREE.Vector3(0, 1.5, 5.0); off.applyEuler(new THREE.Euler(0, player.rotation.y, 0, 'YXZ'));
+            camera.position.copy(player.position).add(off); camera.lookAt(player.position);
+        } else if (cameraViewMode === 2) {
+            const off = new THREE.Vector3(0, 1.5, -5.0); off.applyEuler(new THREE.Euler(0, player.rotation.y, 0, 'YXZ'));
+            camera.position.copy(player.position).add(off); camera.lookAt(player.position);
+        }
+        updateRaycasting();
+        updateChunksAroundPlayer();
+        document.getElementById('coords').textContent = `X: ${player.position.x.toFixed(1)}, Y: ${player.position.y.toFixed(1)}, Z: ${player.position.z.toFixed(1)}`;
+    }
+    if(scene && camera && renderer) renderer.render(scene, camera);
+}
+
+window.onload = function() {
+    initAppFlow();
+    setupPCControls();
+    setupMobileControls();
+    drawHotbarPreviews();
+    animate();
+};
+document.addEventListener('contextmenu', e => e.preventDefault());
+</script>
+</body>
+</html>
